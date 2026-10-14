@@ -43,6 +43,7 @@
 | Usar o app sem rotina definida | Must |
 | Atividades impeditivas na rotina mostram o horário disponível para estudo | Must |
 | Ligar a sessão do dia e ver o calendário de hoje se preencher sozinho | Must |
+| Estudo sem matéria da sessão do dia é atribuído na anotação | Must |
 | Plano do dia ao abrir o app: escrever o que quer fazer e escolher as matérias | Must |
 | Objetivos do dia sem horário e sem indicação de atraso | Must |
 | Anotação do dia no fim do dia ou na manhã seguinte valida o tempo no banco de horas | Must |
@@ -104,7 +105,15 @@ Funcionalidade: Dia de estudo com rotina opcional, cronômetro aberto e relato d
     Quando a pessoa abre o calendário de 15/10 às 14:45
     Então o calendário de 15/10 mostra das 14:00 às 14:30 como estudo
     E mostra das 14:30 às 14:40 como fora do estudo
-    # SUPOSIÇÃO: sem objetivo com play, o estudo fica sem matéria até a pessoa atribuir (confirmar, pergunta 1)
+    E os 30 minutos de estudo aparecem como "estudo sem matéria"
+
+  @must
+  Cenário: Atribuir o estudo sem matéria na anotação do dia
+    Dado que em 15/10 houve 30 minutos de "estudo sem matéria", das 14:00 às 14:30
+    E que a pessoa abriu a anotação de 15/10
+    Quando atribui esses 30 minutos a "Blender" e salva a anotação
+    Então os 30 minutos entram no banco de horas de "Blender" na data de 15/10
+    E o calendário de 15/10 mostra das 14:00 às 14:30 como estudo de "Blender"
 
   @should
   Cenário: Comparar bloco de estudo planejado com o registrado
@@ -356,9 +365,8 @@ Funcionalidade: Dia de estudo com rotina opcional, cronômetro aberto e relato d
 6. Depois da inatividade, o relógio volta sozinho, a menos que o dia tenha virado.
 7. O lembrete ao desligar é só uma tentativa; o garantido é o da próxima abertura.
 8. Um dia sem anotação fica "a validar", sem prazo.
+9. Na sessão do dia sem play, o estudo fica "estudo sem matéria" e a pessoa atribui a matéria na anotação do dia.
 
-## Perguntas em aberto
+## Suposições restantes
 
-1. **Sessão do dia sem play num objetivo:** o tempo de estudo capturado vai para qual matéria? (A) fica "estudo sem matéria" e a pessoa atribui na anotação do dia (recomendado); (B) a sessão do dia exige um objetivo com play.
-
-Outras suposições marcadas nos cenários: rótulos "a fazer" e "a validar", só um objetivo rodando por vez, regra "Blender" criada pelo usuário, tutorial no YouTube reclassificado no resumo, complemento da manhã opcional.
+Marcadas nos cenários: rótulos "a fazer" e "a validar", só um objetivo rodando por vez, regra "Blender" criada pelo usuário, tutorial no YouTube reclassificado no resumo, complemento da manhã opcional.
