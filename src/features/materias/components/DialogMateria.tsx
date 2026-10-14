@@ -30,12 +30,22 @@ function Formulario({ materia, onClose }: { materia: Materia | 'nova'; onClose: 
   const existente = materia === 'nova' ? null : materia
   const [nome, setNome] = useState(existente?.nome ?? '')
   const [cor, setCor] = useState(existente?.cor ?? proximaCorLivre(dados.materias.map((m) => m.cor)))
-  const temHistorico = existente ? dados.sessoes.some((s) => s.materiaId === existente.id) : false
+  const [termos, setTermos] = useState(existente?.termos?.join(', ') ?? '')
+  const temHistorico = existente
+    ? dados.sessoes.some((s) => s.materiaId === existente.id || (s.focoPorMateria[existente.id] ?? 0) > 0)
+    : false
 
   function salvar(e: FormEvent) {
     e.preventDefault()
     if (!nome.trim()) return
-    dispatch({ tipo: 'materia/salvar', materia: { ...existente, id: existente?.id ?? crypto.randomUUID(), nome: nome.trim(), cor } })
+    const lista = termos
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+    dispatch({
+      tipo: 'materia/salvar',
+      materia: { ...existente, id: existente?.id ?? crypto.randomUUID(), nome: nome.trim(), cor, termos: lista.length ? lista : undefined },
+    })
     onClose()
   }
 
@@ -48,6 +58,18 @@ function Formulario({ materia, onClose }: { materia: Materia | 'nova'; onClose: 
       <label className="flex flex-col gap-2">
         <span className={ROTULO}>Nome</span>
         <Input className={CAMPO} value={nome} onChange={(e) => setNome(e.target.value)} autoFocus required />
+      </label>
+      <label className="flex flex-col gap-2">
+        <span className={ROTULO}>Termos, separados por vírgula</span>
+        <Input
+          className={CAMPO}
+          value={termos}
+          onChange={(e) => setTermos(e.target.value)}
+          placeholder="Ex.: verb tenses, cambridge, podcast"
+        />
+        <span className="text-xs text-muted-foreground">
+          Janelas com o nome da matéria ou um destes termos no título contam como estudo dela, mesmo no YouTube.
+        </span>
       </label>
       <fieldset className="flex flex-col gap-2">
         <legend className={cn(ROTULO, 'mb-2')}>Cor</legend>

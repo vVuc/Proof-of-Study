@@ -1,20 +1,18 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { CabecalhoCard } from '@/shared/components/CabecalhoCard'
 import { CabecalhoPagina } from '@/shared/components/CabecalhoPagina'
-import { ControleSegmentado } from '@/shared/components/ControleSegmentado'
 import { formatarDuracao } from '@/shared/lib/datas'
 import { BOTAO, CAMPO, CARTAO, ROTULO } from '@/shared/lib/estilos'
 import { FORMA_PAGINA } from '@/shared/lib/formas'
-import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
-import { Checkbox } from '@/shared/ui/checkbox'
 import { Pencil } from '@/shared/ui/icones'
 import { Input } from '@/shared/ui/input'
 import { useDados } from '@/store/context/dados-context'
-import type { Preferencias, Regra, Tipo } from '@/store/model/dados'
+import type { Regra, Tipo } from '@/store/model/dados'
 import { classificar, ordenarRegras, ROTULO_TIPO } from '@/features/sessao/utils/classificacao'
 import { resumir } from '@/features/sessao/utils/resumo'
 import { PontoTipo } from '@/features/sessao/components/partes'
+import { CardPreferencias } from './components/CardPreferencias'
 import { DialogRegra } from './components/DialogRegra'
 import { SeletorTipo } from './components/SeletorTipo'
 
@@ -35,8 +33,8 @@ export function AppsPage() {
       .sort((a, b) => b.inicio - a.inicio)
       .slice(0, SESSOES_RECENTES)
       .flatMap((s) => s.trechos)
-    return resumir(trechos, dados.regras).grupos.filter((g) => g.semRegra && g.sugestao).slice(0, 8)
-  }, [dados.sessoes, dados.regras])
+    return resumir(trechos, { regras: dados.regras, materias: dados.materias }).grupos.filter((g) => g.semRegra && g.sugestao).slice(0, 8)
+  }, [dados.sessoes, dados.regras, dados.materias])
 
   const mudarTipo = (regra: Regra, tipo: Tipo) => dispatch({ tipo: 'regra/salvar', regra: { ...regra, tipo } })
 
@@ -57,8 +55,8 @@ export function AppsPage() {
         }
       />
       <p className="max-w-[640px] text-sm text-pretty text-muted-foreground">
-        Cada janela é classificada pelo nome do app ou por uma palavra no título. Mudar aqui altera como a próxima sessão é
-        contada.
+        Cada janela é classificada primeiro pelo nome e pelos termos das matérias no título, depois pelas regras abaixo (nome do
+        app ou palavra no título). Mudanças valem na hora, também para a sessão aberta.
       </p>
 
       <div className={CARTAO}>
@@ -67,7 +65,10 @@ export function AppsPage() {
           <div key={r.id} className="flex flex-wrap items-center gap-3.5 border-b border-border px-3.5 py-2.5">
             <div className="flex min-w-[180px] flex-1 flex-col">
               <span className="text-sm font-semibold">{r.rotulo}</span>
-              <span className="truncate text-xs text-muted-foreground">{descreverRegra(r)}</span>
+              <span className="truncate text-xs text-muted-foreground">
+                {descreverRegra(r)}
+                {r.tipo === 'estudo' && r.materiaId && ` · ${dados.materias.find((m) => m.id === r.materiaId)?.nome ?? 'matéria'}`}
+              </span>
             </div>
             <SeletorTipo rotulo={`Como ${r.rotulo} conta`} valor={r.tipo} onChange={(tipo) => mudarTipo(r, tipo)} />
             <Button variant="ghost" size="icon-sm" className="rounded-full" aria-label={`Editar ${r.rotulo}`} onClick={() => setEditando(r)}>
@@ -123,7 +124,11 @@ function TestarTitulo() {
   const { dados } = useDados()
   const [titulo, setTitulo] = useState('')
   const [app, setApp] = useState('')
-  const classe = titulo.trim() || app.trim() ? classificar({ titulo, processo: app, proprio: false, ausente: false }, dados.regras) : null
+  const classe =
+    titulo.trim() || app.trim()
+      ? classificar({ titulo, processo: app, proprio: false, ausente: false }, { regras: dados.regras, materias: dados.materias })
+      : null
+  const materia = dados.materias.find((m) => m.id === classe?.materiaId)
 
   return (
     <div className={CARTAO}>
@@ -140,70 +145,16 @@ function TestarTitulo() {
         {classe && (
           <p className="flex items-center gap-2 text-sm">
             <PontoTipo tipo={classe.tipo} />
-            Conta como <b>{ROTULO_TIPO[classe.tipo].toLowerCase()}</b>
-            {classe.semRegra ? ' (sem regra)' : ` pela regra ${classe.rotulo}`}.
+            Conta como <b>{materia ? `estudo de ${materia.nome}` : ROTULO_TIPO[classe.tipo].toLowerCase()}</b>
+            {classe.semRegra
+              ? ' (sem regra)'
+              : classe.chave.startsWith('materia:')
+                ? ' (pelo nome ou termo da matéria)'
+                : ` pela regra ${classe.rotulo}`}
+            .
           </p>
         )}
       </div>
-    </div>
-  )
-}
-
-function CardPreferencias() {
-  const { dados, dispatch } = useDados()
-  const p = dados.preferencias
-  const mudar = (mudancas: Partial<Preferencias>) => dispatch({ tipo: 'preferencias/salvar', preferencias: { ...p, ...mudancas } })
-
-  return (
-    <div className={CARTAO}>
-      <CabecalhoCard titulo="Sessão e avisos" faixa="bg-amarelo" forma={{ forma: 'quadrado', cor: 'tinta' }} />
-      <div className="flex flex-col gap-4 p-4">
-        <Campo rotulo="Pomodoro">
-          <ControleSegmentado
-            rotulo="Duração do pomodoro"
-            valor={String(p.duracaoMin)}
-            onChange={(v) => mudar({ duracaoMin: Number(v) })}
-            opcoes={[25, 50].map((m) => ({ valor: String(m), rotulo: `${m} min` }))}
-          />
-        </Campo>
-        <Campo rotulo="Conta como ausente sem mexer no PC por">
-          <ControleSegmentado
-            rotulo="Tempo até contar como ausente"
-            valor={String(p.limiteAusenciaMin)}
-            onChange={(v) => mudar({ limiteAusenciaMin: Number(v) })}
-            opcoes={[2, 5, 10, 20].map((m) => ({ valor: String(m), rotulo: `${m} min` }))}
-          />
-        </Campo>
-        <Campo rotulo="Aviso de distração">
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={p.avisoDistracao} onCheckedChange={(v) => mudar({ avisoDistracao: v === true })} />
-            Avisar quando eu ficar fora do estudo (o registro continua)
-          </label>
-          {p.avisoDistracao && (
-            <ControleSegmentado
-              rotulo="Avisar depois de"
-              valor={String(p.avisoDistracaoSeg)}
-              onChange={(v) => mudar({ avisoDistracaoSeg: Number(v) })}
-              opcoes={[
-                { valor: '30', rotulo: '30 s' },
-                { valor: '60', rotulo: '1 min' },
-                { valor: '120', rotulo: '2 min' },
-                { valor: '300', rotulo: '5 min' },
-              ]}
-            />
-          )}
-        </Campo>
-        <p className="text-xs text-muted-foreground">Mudanças valem a partir do próximo pomodoro.</p>
-      </div>
-    </div>
-  )
-}
-
-function Campo({ rotulo, children }: { rotulo: string; children: ReactNode }) {
-  return (
-    <div className={cn('flex flex-col gap-2')}>
-      <span className={cn(ROTULO, 'text-muted-foreground')}>{rotulo}</span>
-      {children}
     </div>
   )
 }

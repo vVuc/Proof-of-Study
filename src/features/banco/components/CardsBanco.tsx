@@ -5,9 +5,8 @@ import { DIAS_SEMANA, deISO, formatarDuracao, formatarHM, formatarMeta, paraISO,
 import { CARTAO, ROTULO, VALOR_DESTAQUE } from '@/shared/lib/estilos'
 import { formatarPercentual } from '@/shared/lib/percentual'
 import { cn } from '@/shared/lib/utils'
-import type { BlocoRotina, Sessao } from '@/store/model/dados'
+import type { BlocoRotina } from '@/store/model/dados'
 import { estudoNoDia } from '@/features/rotina/utils/rotina'
-import { focoNoBanco } from '@/features/sessao/utils/resumo'
 import type { SaldoMateria } from '../utils/banco'
 
 
@@ -24,10 +23,10 @@ export function CardHorasFocadas({ saldo, taxa }: { saldo: SaldoMateria; taxa: n
         acoes={
           <Ajuda titulo="O que entra no banco">
             <p>
-              Só entra no banco o tempo em janelas marcadas como <b>estudo</b>, e só de sessões com anotação do que foi
-              estudado.
+              Entra no banco o <b>estudo</b> que o app ligou a esta matéria (pelo nome, pelos termos ou pela regra do app), nos
+              dias com <b>relato final</b>. Uma sessão com anotação própria também entra.
             </p>
-            <p>Tempo fora do estudo e janelas ignoradas ficam registrados na sessão, mas não somam.</p>
+            <p>Tempo fora do estudo e janelas ignoradas ficam registrados no dia, mas não somam.</p>
           </Ajuda>
         }
       />
@@ -57,8 +56,8 @@ export function CardHorasFocadas({ saldo, taxa }: { saldo: SaldoMateria; taxa: n
         </div>
         {saldo.pendenteMs > 0 && (
           <p className="text-xs text-muted-foreground">
-            <b className="text-foreground">{formatarDuracao(saldo.pendenteMs)}</b> focados em sessões sem anotação ainda não
-            entraram.
+            <b className="text-foreground">{formatarDuracao(saldo.pendenteMs)}</b> de estudo esperam o relato do dia (ou uma
+            anotação na sessão).
           </p>
         )}
       </div>
@@ -75,23 +74,24 @@ function Numero({ rotulo, valor, cor }: { rotulo: string; valor: string; cor?: s
   )
 }
 
-/** Uma coluna por dia: o fundo é o bloco de estudo da rotina, o azul é o tempo focado. */
+/** Uma coluna por dia: o fundo é o horário de estudo da rotina, o azul é o tempo que entrou no banco. */
 export function CardDiasDeEstudo({
   semana,
   materiaId,
   blocos,
-  sessoes,
+  focoDoDia,
 }: {
   semana: DataISO
   materiaId: string
   blocos: BlocoRotina[]
-  sessoes: Sessao[]
+  /** Estudo da matéria no banco num dia lógico, em ms. */
+  focoDoDia: (dia: DataISO) => number
 }) {
   const segunda = deISO(semana)
   const dias = DIAS_SEMANA.map(({ dia, curto }, i) => {
     const data = paraISO(addDays(segunda, i))
     const planejado = estudoNoDia(blocos, materiaId, dia)
-    const focado = sessoes.filter((s) => paraISO(new Date(s.inicio)) === data).reduce((soma, s) => soma + focoNoBanco(s), 0) / 60_000
+    const focado = focoDoDia(data) / 60_000
     return { curto, data, planejado, focado }
   })
   const escala = Math.max(60, ...dias.map((d) => Math.max(d.planejado, d.focado)))
@@ -128,7 +128,7 @@ export function CardDiasDeEstudo({
           </span>
           <span className="flex items-center gap-[5px]">
             <span className="size-2.5 border-[1.5px] border-contorno bg-foco-suave" />
-            bloco de estudo na rotina
+            horário de estudo na rotina
           </span>
         </div>
       </div>

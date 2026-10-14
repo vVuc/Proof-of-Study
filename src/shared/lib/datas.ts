@@ -7,6 +7,18 @@ export type DataISO = string
 export const paraISO = (data: Date): DataISO => format(data, 'yyyy-MM-dd')
 export const deISO = (data: DataISO) => parseISO(data)
 
+/**
+ * Dia lógico de um momento: o dia só vira no horário configurado (padrão: 4h), e não à meia-noite.
+ * Às 2h de quarta, com o dia começando às 4h, ainda é terça. Mesma conta de `dia_logico` no Rust.
+ */
+export const diaLogico = (ms: number, inicioDoDiaMin: number): DataISO => paraISO(new Date(ms - inicioDoDiaMin * 60_000))
+
+/** O dia lógico seguinte (ou anterior, com `n` negativo). */
+export const somarDias = (dia: DataISO, n: number): DataISO => paraISO(addDays(deISO(dia), n))
+
+/** Momento em que um dia lógico começa (o horário configurado, na data). */
+export const inicioDoDiaLogico = (dia: DataISO, inicioDoDiaMin: number) => deISO(dia).getTime() + inicioDoDiaMin * 60_000
+
 /** Segunda-feira da semana da data (a semana vai de segunda a domingo). */
 export const inicioDaSemana = (data: Date): DataISO => paraISO(startOfWeek(data, { weekStartsOn: 1 }))
 
@@ -54,7 +66,7 @@ export function formatarDuracao(ms: number): string {
   return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`
 }
 
-/** Relógio do pomodoro: "24:59" ou "1:02:03". */
+/** Relógio da sessão: "24:59" ou "1:02:03". */
 export function formatarRelogio(ms: number): string {
   const total = Math.max(0, Math.ceil(ms / 1000))
   const h = Math.floor(total / 3600)

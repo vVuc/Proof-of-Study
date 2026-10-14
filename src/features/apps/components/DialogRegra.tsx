@@ -1,13 +1,17 @@
 import { useState, type FormEvent } from 'react'
 import { ControleSegmentado } from '@/shared/components/ControleSegmentado'
-import { BOTAO, CAMADA, CAMPO, ROTULO, RODAPE_DIALOG } from '@/shared/lib/estilos'
+import { BOTAO, CAMADA, CAMPO, CAMPO_SELECT, ROTULO, RODAPE_DIALOG } from '@/shared/lib/estilos'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
 import { Input } from '@/shared/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
+import { PontoCor } from '@/shared/components/PontoCor'
 import { useDados } from '@/store/context/dados-context'
 import type { Regra, Tipo } from '@/store/model/dados'
 import { SeletorTipo } from './SeletorTipo'
+
+const SEM_MATERIA = 'qualquer'
 
 const lerTermos = (texto: string) =>
   texto
@@ -27,11 +31,13 @@ export function DialogRegra({ regra, onClose }: { regra: Partial<Regra> | null; 
 }
 
 function Formulario({ inicial, onClose }: { inicial: Partial<Regra>; onClose: () => void }) {
-  const { dispatch } = useDados()
+  const { dados, dispatch } = useDados()
   const [rotulo, setRotulo] = useState(inicial.rotulo ?? '')
   const [campo, setCampo] = useState<Regra['campo']>(inicial.campo ?? 'titulo')
   const [termos, setTermos] = useState(inicial.termos?.join(', ') ?? '')
   const [tipo, setTipo] = useState<Tipo>(inicial.tipo ?? 'fora')
+  const [materiaId, setMateriaId] = useState(inicial.materiaId ?? SEM_MATERIA)
+  const materias = dados.materias.filter((m) => !m.arquivada || m.id === inicial.materiaId)
 
   function salvar(e: FormEvent) {
     e.preventDefault()
@@ -39,7 +45,14 @@ function Formulario({ inicial, onClose }: { inicial: Partial<Regra>; onClose: ()
     if (lista.length === 0) return
     dispatch({
       tipo: 'regra/salvar',
-      regra: { id: inicial.id ?? crypto.randomUUID(), rotulo: rotulo.trim() || lista[0], campo, termos: lista, tipo },
+      regra: {
+        id: inicial.id ?? crypto.randomUUID(),
+        rotulo: rotulo.trim() || lista[0],
+        campo,
+        termos: lista,
+        tipo,
+        materiaId: tipo === 'estudo' && materiaId !== SEM_MATERIA ? materiaId : undefined,
+      },
     })
     onClose()
   }
@@ -74,6 +87,25 @@ function Formulario({ inicial, onClose }: { inicial: Partial<Regra>; onClose: ()
         <span className={ROTULO}>Conta como</span>
         <SeletorTipo rotulo="Conta como" valor={tipo} onChange={setTipo} />
       </div>
+      {tipo === 'estudo' && (
+        <label className="flex flex-col gap-1.5">
+          <span className={ROTULO}>Estudo de qual matéria</span>
+          <Select value={materiaId} onValueChange={setMateriaId}>
+            <SelectTrigger className={CAMPO_SELECT}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SEM_MATERIA}>Qualquer uma (o app decide pelo dia)</SelectItem>
+              {materias.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  <PontoCor cor={m.cor} />
+                  {m.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </label>
+      )}
       <DialogFooter className={cn(RODAPE_DIALOG, 'border-t-2 border-contorno pt-3')}>
         {inicial.id && (
           <Button

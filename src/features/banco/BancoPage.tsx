@@ -13,12 +13,13 @@ import { Pencil } from '@/shared/ui/icones'
 import { useDados } from '@/store/context/dados-context'
 import type { Materia } from '@/store/model/dados'
 import { DialogMateria } from '@/features/materias/components/DialogMateria'
-import { estudoRestanteNaSemana } from '@/features/rotina/utils/rotina'
+import { estudoRestanteNaSemana, temEstudoComHorario } from '@/features/rotina/utils/rotina'
 import { taxaDeFoco } from '@/features/sessao/utils/resumo'
 import { CardDiasDeEstudo, CardHorasFocadas } from './components/CardsBanco'
 import { CardSessoes } from './components/CardSessoes'
 import { DialogMeta } from './components/DialogMeta'
-import { metaDaSemana, numeroDaEtapa, saldoDaMateria, sessoesDaSemana } from './utils/banco'
+import { metaDaSemana, numeroDaEtapa, saldoDaMateria, sessoesDaMateria } from './utils/banco'
+import { focoNoBanco } from './utils/validacao'
 
 /** Banco da semana de uma matéria: a meta, se ela cabe na rotina, as horas focadas, os dias e as sessões. */
 export function BancoPage() {
@@ -55,11 +56,12 @@ export function BancoPage() {
 
   const saldo = saldoDaMateria(dados, materia, semana)
   const meta = saldo.meta
-  const sessoes = sessoesDaSemana(dados.sessoes, semana).filter((s) => s.materiaId === materia.id)
+  const sessoes = sessoesDaMateria(dados.sessoes, materia.id, semana)
   const foco = sessoes.reduce((s, x) => s + x.focoMs, 0)
   const fora = sessoes.reduce((s, x) => s + x.foraMs, 0)
   const faltam = meta ? Math.max(0, meta.minutos * 60_000 - saldo.noBancoMs) : 0
   const disponivel = estudoRestanteNaSemana(dados.blocos, materia.id, agora) * 60_000
+  const comHorario = temEstudoComHorario(dados.blocos, materia.id)
 
   return (
     <div className="flex flex-col gap-4">
@@ -116,10 +118,14 @@ export function BancoPage() {
             <p>
               <b>Meta cumprida.</b> {formatarHM(saldo.noBancoMs)} no banco nesta semana.
             </p>
-          ) : (
+          ) : comHorario ? (
             <p>
               <b>{faltam <= disponivel ? 'Cabe na rotina.' : 'Vai faltar tempo.'}</b> Faltam {formatarHM(faltam)} para a meta e a
-              rotina tem {formatarHM(disponivel)} de estudo de {materia.nome} até domingo.
+              rotina tem {formatarHM(disponivel)} de estudo de {materia.nome} com horário até domingo.
+            </p>
+          ) : (
+            <p>
+              <b>Faltam {formatarHM(faltam)} para a meta.</b> O tempo de {materia.nome} entra sozinho com a sessão do dia rodando.
             </p>
           )}
         </CaixaDestaque>
@@ -133,10 +139,15 @@ export function BancoPage() {
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
         <CardHorasFocadas saldo={saldo} taxa={sessoes.length ? taxaDeFoco(foco, fora) : null} />
-        <CardDiasDeEstudo semana={semana} materiaId={materia.id} blocos={dados.blocos} sessoes={sessoes} />
+        <CardDiasDeEstudo
+          semana={semana}
+          materiaId={materia.id}
+          blocos={dados.blocos}
+          focoDoDia={(dia) => sessoes.filter((s) => s.dia === dia).reduce((soma, s) => soma + focoNoBanco(dados, s, materia.id), 0)}
+        />
       </div>
 
-      <CardSessoes sessoes={sessoes} />
+      <CardSessoes sessoes={sessoes} materiaId={materia.id} />
 
       <DialogMateria materia={editandoMateria} onClose={() => setEditandoMateria(null)} />
       <DialogMeta alvo={editandoMeta ? { materia, semana } : null} onClose={() => setEditandoMeta(false)} />

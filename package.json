@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test": "vitest run",
     "desktop": "tauri dev",
     "desktop:build": "tauri build",
     "tauri": "tauri"
@@ -16,6 +17,7 @@
     "@fontsource-variable/outfit": "^5.3.0",
     "@tanstack/react-router": "^1.170.41",
     "@tauri-apps/api": "^2.12.1",
+    "@tauri-apps/plugin-autostart": "^2.7.0",
     "@tauri-apps/plugin-notification": "^2.5.1",
     "@tauri-apps/plugin-store": "^2.5.0",
     "class-variance-authority": "^0.7.1",
@@ -38,6 +40,7 @@
     "oxlint": "^1.87.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
-    "vite": "^8.3.2"
+    "vite": "^8.3.2",
+    "vitest": "^5.0.4"
   }
 }

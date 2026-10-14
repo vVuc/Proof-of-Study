@@ -10,7 +10,8 @@ rust-version = "1.90"
 
 [lib]
 name = "proof_of_study_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# Só desktop: sem "staticlib" (que serve ao iOS e gerava um .lib de centenas de MB a cada build).
+crate-type = ["cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.7.0", features = [] }
@@ -25,6 +26,18 @@ tauri-plugin-log = "2"
 tauri-plugin-store = "2"
 tauri-plugin-notification = "2"
 tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-global-shortcut = "2"
+# Voz transcrita no PC (recurso opcional de compilação: sem ele, o relato é só texto). Precisa de CMake e do
+# libclang (LLVM) para gerar as bindings do whisper.cpp; o CI e a release compilam com ela.
+whisper-rs = { version = "0.16", optional = true }
+cpal = { version = "0.18", optional = true }
+ureq = { version = "3", optional = true }
+sha2 = { version = "0.11", optional = true }
+
+[features]
+default = []
+voz = ["dep:whisper-rs", "dep:cpal", "dep:ureq", "dep:sha2"]
 
 [target.'cfg(windows)'.dependencies]
 # Título da janela ativa, nome do programa e tempo sem mexer no teclado e mouse.

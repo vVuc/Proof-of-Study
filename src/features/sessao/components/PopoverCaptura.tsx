@@ -3,20 +3,26 @@ import { ROTULO } from '@/shared/lib/estilos'
 import { cn } from '@/shared/lib/utils'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { useSessao } from '../context/sessao-context'
-import { useResumoDaSessao } from '../hooks/useResumoDaSessao'
+import { useResumoDoDia } from '../hooks/useResumoDoDia'
 import { COR_TIPO, LinhaGrupo } from './partes'
 
-/** Rótulo e cor do quadradinho de status da captura (cabeçalho da sessão, widget). */
+/** Rótulo e cor do quadradinho de status da captura (cabeçalho das telas, widget). */
 export function useStatusCaptura() {
-  const { etapa, retrato } = useSessao()
-  const { capturando, atual } = useResumoDaSessao()
-  const rotulo = capturando ? 'Capturando' : etapa === 'rodando' && retrato && !retrato.captura ? 'Captura pausada' : 'Captura desligada'
+  const { fase, retrato } = useSessao()
+  const { capturando, atual } = useResumoDoDia()
+  const rotulo = capturando
+    ? 'Capturando'
+    : fase === 'rodando' && retrato && !retrato.captura
+      ? 'Captura pausada'
+      : fase === 'ausente'
+        ? 'Pausa automática'
+        : 'Captura desligada'
   const cor = capturando && atual?.tipo ? COR_TIPO[atual.tipo].bloco : 'bg-muted'
   return { rotulo, cor }
 }
 
 /**
- * Transparência: o botão "Capturando ▾" abre o que está sendo lido agora, o que já foi registrado nesta sessão e
+ * Transparência: o botão "Capturando ▾" abre o que está sendo lido agora, o que já foi registrado hoje e
  * o que o app registra e não registra. Dá para pausar só a captura, sem parar o relógio.
  */
 export function PopoverCaptura() {
@@ -42,16 +48,16 @@ export function PopoverCaptura() {
 }
 
 export function DetalheCaptura({ compacto }: { compacto?: boolean }) {
-  const { etapa, retrato, alternarCaptura } = useSessao()
-  const { resumo, atual } = useResumoDaSessao()
-  const ativa = etapa === 'rodando' || etapa === 'pausado'
+  const { fase, retrato, alternarCaptura } = useSessao()
+  const { resumo, atual } = useResumoDoDia()
+  const rodando = fase === 'rodando'
 
   return (
     <div className={cn('flex flex-col gap-3', compacto ? 'pt-2.5' : 'p-4')}>
       {!compacto && (
         <div className="flex items-center justify-between">
           <span className={cn(ROTULO, 'text-muted-foreground')}>Janela ativa agora</span>
-          {ativa && (
+          {rodando && (
             <button
               type="button"
               onClick={() => void alternarCaptura()}
@@ -64,10 +70,10 @@ export function DetalheCaptura({ compacto }: { compacto?: boolean }) {
       )}
       <div className="flex flex-col gap-0.5">
         <span className={cn('leading-snug font-medium [overflow-wrap:anywhere]', compacto ? 'text-xs' : 'text-[0.8125rem]')}>
-          {atual?.titulo ?? (etapa === 'pronto' ? 'Aguardando início do pomodoro' : 'Captura pausada')}
+          {atual?.titulo ?? (fase === 'parado' ? 'Aguardando o play do dia' : fase === 'ausente' ? 'Você está longe do PC' : 'Captura pausada')}
         </span>
         <span className={cn('text-muted-foreground', compacto ? 'text-[0.6875rem]' : 'text-xs')}>
-          {atual?.detalhe ?? (etapa === 'pronto' ? 'Nenhuma janela registrada' : 'Tempo não registrado')}
+          {atual?.detalhe ?? 'Nenhuma janela sendo registrada'}
         </span>
       </div>
       <div className={cn('flex flex-col', !compacto && 'border-t-2 border-contorno')}>
@@ -98,7 +104,9 @@ export function DetalheCaptura({ compacto }: { compacto?: boolean }) {
             <br />
             URL das páginas
           </div>
-          <div className="col-span-2 text-muted-foreground">Dados ficam só neste PC. A captura só roda com o pomodoro ativo.</div>
+          <div className="col-span-2 text-muted-foreground">
+            Dados ficam só neste PC. A captura só roda com a sessão do dia aberta, do play até a pausa ou o fim do dia.
+          </div>
         </div>
       )}
     </div>

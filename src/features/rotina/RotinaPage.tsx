@@ -2,23 +2,25 @@ import { useMemo, useState } from 'react'
 import { addDays, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { CabecalhoPagina } from '@/shared/components/CabecalhoPagina'
-import { deISO, inicioDaSemana } from '@/shared/lib/datas'
-import { BOTAO } from '@/shared/lib/estilos'
+import { PontoCor } from '@/shared/components/PontoCor'
+import { DIAS_SEMANA, deISO, inicioDaSemana } from '@/shared/lib/datas'
+import { BOTAO, ROTULO } from '@/shared/lib/estilos'
 import { FORMA_PAGINA } from '@/shared/lib/formas'
+import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { useDados } from '@/store/context/dados-context'
-import type { BlocoRotina, Categoria } from '@/store/model/dados'
-import { DialogBloco } from './components/DialogBloco'
+import type { Categoria } from '@/store/model/dados'
+import { DialogBloco, type RascunhoBloco } from './components/DialogBloco'
 import { GradeSemana } from './components/GradeSemana'
 import { CATEGORIAS, LISTA_CATEGORIAS } from './constants/categorias'
-import { segmentosDoDia } from './utils/rotina'
+import { segmentosDoDia, semHorarioDoDia } from './utils/rotina'
 
 /** A grade mostra das 8h em diante, ou desde o bloco mais cedo (fora o sono). */
 const HORA_INICIAL = 8
 
 export function RotinaPage() {
   const { dados } = useDados()
-  const [editando, setEditando] = useState<Partial<BlocoRotina> | null>(null)
+  const [editando, setEditando] = useState<RascunhoBloco | null>(null)
   const segunda = deISO(inicioDaSemana(new Date()))
   const domingo = addDays(segunda, 6)
   const periodo =
@@ -41,7 +43,7 @@ export function RotinaPage() {
       }
       ocupadoNoDia += ocupado.size
     }
-    // "Sem registro": horas acordadas (8h às 23h) sem nenhum bloco, na semana.
+    // "Sem horário marcado": horas acordadas (8h às 23h) sem nenhum item com horário, na semana.
     return { totais, semRegistro: Math.round((7 * 15 * 60 - ocupadoNoDia) / 60), horaInicial: Math.floor(primeiro / 60) }
   }, [dados.blocos])
 
@@ -59,9 +61,14 @@ export function RotinaPage() {
           </>
         }
         acoes={
-          <Button variant="outline" className={BOTAO} onClick={() => setEditando({})}>
-            + Bloco recorrente
-          </Button>
+          <>
+            <Button variant="outline" className={BOTAO} onClick={() => setEditando({ semHorario: true, categoria: 'estudo' })}>
+              + Objetivo sem horário
+            </Button>
+            <Button variant="outline" className={BOTAO} onClick={() => setEditando({})}>
+              + Com horário
+            </Button>
+          </>
         }
       />
 
@@ -81,8 +88,41 @@ export function RotinaPage() {
           ))}
           <span className="flex items-center gap-1.5">
             <span className="listrado size-2.5 border-[1.5px] border-contorno" />
-            Sem registro <b className="font-semibold">{semRegistro}h</b>
+            Livre <b className="font-semibold">{semRegistro}h</b>
           </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <span className={cn(ROTULO, 'text-muted-foreground')}>Objetivos sem horário</span>
+        <div className="flex pl-10">
+          {DIAS_SEMANA.map(({ dia, nome }) => (
+            <div key={dia} className="flex min-w-0 flex-1 flex-col gap-1 border-l border-border px-[3px] py-1">
+              {semHorarioDoDia(dados.blocos, dia).map((b) => {
+                const materia = dados.materias.find((m) => m.id === b.materiaId)
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setEditando(b)}
+                    title={`${b.titulo} · ${nome}, sem horário`}
+                    className="flex items-center gap-1.5 truncate border-2 border-dashed border-contorno bg-card px-1.5 py-[3px] text-left text-[0.6875rem] font-semibold hover:bg-amarelo hover:text-tinta"
+                  >
+                    {materia && <PontoCor cor={materia.cor} />}
+                    <span className="truncate">{materia?.nome ?? b.titulo}</span>
+                  </button>
+                )
+              })}
+              <button
+                type="button"
+                onClick={() => setEditando({ semHorario: true, categoria: 'estudo', dias: [dia] })}
+                className="text-left text-[0.625rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase hover:text-foreground"
+                aria-label={`Objetivo sem horário na ${nome.toLowerCase()}`}
+              >
+                +
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -1,12 +1,15 @@
 import type { DataISO } from '@/shared/lib/datas'
 
 /** Versão do formato salvo em `dados.json`. Ao mudar o formato, suba a versão e converta em `atualizarDados`. */
-export const VERSAO_DADOS = 2
+export const VERSAO_DADOS = 3
 
 export type Categoria = 'estudo' | 'trabalho' | 'jogo' | 'treino' | 'terapia' | 'sono'
 
 /** Estudo soma no banco; fora do estudo é distração (ou ausência); ignorar fica registrado, mas não conta. */
 export type Tipo = 'estudo' | 'fora' | 'ignorar'
+
+/** Correção de um grupo de janelas num dia: outro tipo ou estudo de uma matéria (`materia:<id>`). */
+export type Ajuste = Tipo | `materia:${string}`
 
 export interface Materia {
   id: string
@@ -15,6 +18,8 @@ export interface Materia {
   cor: string
   /** Some das escolhas, mas continua no histórico. */
   arquivada?: boolean
+  /** Palavras de app ou de título que identificam a matéria ("blender", "verb tenses"). O nome também conta. */
+  termos?: string[]
 }
 
 /** Meta de uma matéria numa semana: o que estudar (a etapa) e quantas horas focadas. */
@@ -28,20 +33,45 @@ export interface Meta {
   descricao: string
 }
 
-/** Bloco recorrente da rotina. Se `fim <= inicio`, passa da meia-noite (ex.: sono das 23:00 às 07:00). */
+/**
+ * Item recorrente da rotina. Com horário, aparece na grade (se `fim <= inicio`, passa da meia-noite).
+ * Sem horário, é um objetivo que se repete naquele dia da semana.
+ */
 export interface BlocoRotina {
   id: string
   titulo: string
   categoria: Categoria
   /** Dias em que começa, de 0 (domingo) a 6 (sábado). */
   dias: number[]
-  /** Minutos do dia (0 a 1439). */
-  inicio: number
-  fim: number
+  /** Minutos do dia (0 a 1439). Os dois ausentes: item sem horário. */
+  inicio?: number
+  fim?: number
   /** Matéria do bloco de estudo. */
   materiaId?: string
-  /** Notificar quando o bloco começa (só estudo). */
+  /** Notificar quando o bloco começa (só estudo com horário). */
   avisar: boolean
+}
+
+export type BlocoComHorario = BlocoRotina & { inicio: number; fim: number }
+
+export const temHorario = (b: BlocoRotina): b is BlocoComHorario => b.inicio !== undefined && b.fim !== undefined
+
+/** O que a pessoa quer fazer num dia. Não tem botão: recebe o tempo que a atribuição liga a ele. */
+export interface Objetivo {
+  id: string
+  /** Dia lógico. */
+  dia: DataISO
+  materiaId?: string
+  /** Texto livre, para objetivos sem matéria ("Modelar a cadeira"). */
+  titulo?: string
+  /** Palavras do dia que ligam janelas a este objetivo, além das da matéria. */
+  termos?: string[]
+  origem: 'rotina' | 'relato' | 'manual'
+  /** Item da rotina que gerou o objetivo. */
+  itemId?: string
+  ordem: number
+  /** Tirado do dia pela pessoa (os da rotina não são apagados, para não voltarem). */
+  pulado?: boolean
 }
 
 /** Intervalo contínuo na mesma janela, registrado pelo Rust (`src-tauri/src/rastreador.rs`). */
@@ -57,21 +87,40 @@ export interface Trecho {
   semCaptura?: boolean
 }
 
-export interface Sessao {
-  id: string
-  materiaId: string
+export type MotivoPausa = 'manual' | 'ausencia' | 'suspensao' | 'desligado'
+
+/** Intervalo sem registro dentro da sessão do dia. */
+export interface Pausa {
   inicio: number
   fim: number
-  duracaoPlanejadaMin: number
+  motivo: MotivoPausa
+}
+
+/** O tempo capturado num dia lógico, do play até a pausa final, o relato final ou a virada do dia. */
+export interface Sessao {
+  id: string
+  /** Dia lógico. */
+  dia: DataISO
+  inicio: number
+  fim: number
+  pausas: Pausa[]
   trechos: Trecho[]
-  /** Grupos que a pessoa reclassificou no fim da sessão (ex.: YouTube que era aula). */
-  ajustes: Record<string, Tipo>
+  /** Correções feitas no relato final (ou no fim de uma sessão antiga). */
+  ajustes: Record<string, Ajuste>
+  /** Todo o tempo de estudo (com e sem objetivo). */
   focoMs: number
   foraMs: number
-  /** O que foi estudado. Sem anotação nem imagem, o tempo não entra no banco de horas. */
+  /** Estudo atribuído a cada matéria. */
+  focoPorMateria: Record<string, number>
+  /** Estudo que o app não soube ligar a um objetivo. */
+  semObjetivoMs: number
+  /** Evidência própria da sessão (texto). Com ela, o tempo entra no banco mesmo sem relato. */
   anotacao: string
   /** Nomes dos arquivos na pasta de imagens do app. */
   imagens: string[]
+  /** Sessões até o formato 2: um pomodoro de uma matéria. */
+  materiaId?: string
+  duracaoPlanejadaMin?: number
 }
 
 /** Regra que classifica janelas: o nome do app ou uma palavra no título. As de título valem antes. */
@@ -81,47 +130,75 @@ export interface Regra {
   campo: 'app' | 'titulo'
   termos: string[]
   tipo: Tipo
+  /** Regra de estudo que aponta para uma matéria. */
+  materiaId?: string
 }
+
+export interface Relato {
+  id: string
+  /** Dia lógico a que o relato se refere. */
+  dia: DataISO
+  momento: 'inicial' | 'final'
+  texto: string
+  origem: 'texto' | 'voz'
+  /** De 1 a 5, só no relato final. */
+  humor?: number
+  /** Correções do dia feitas no relato final (grupo de janelas → tipo ou matéria). Valem para as sessões do dia. */
+  ajustes?: Record<string, Ajuste>
+  criadoEm: number
+  /** Relato final feito no dia lógico seguinte. */
+  atrasado: boolean
+}
+
+export type ModeloVoz = 'base' | 'small'
 
 export interface Preferencias {
-  duracaoMin: number
-  /** Sem mexer no teclado e no mouse por esse tempo, a sessão conta como ausência. */
+  /** Lembrete de pausa a cada N minutos (o antigo pomodoro); `null` desliga. Não para a sessão. */
+  cicloMin: number | null
+  /** Sem mexer no teclado e no mouse por esse tempo, o trecho conta como ausente. */
   limiteAusenciaMin: number
+  /** Ausência maior que isso vira pausa automática; a captura volta quando a pessoa volta. */
+  ausenciaLongaMin: number
   avisoDistracao: boolean
   avisoDistracaoSeg: number
-}
-
-/** Pomodoro em andamento (ou encerrado e ainda sem anotação). Os trechos são uma cópia de segurança. */
-export interface SessaoAtual {
-  id: string
-  materiaId: string
-  inicio: number
-  duracaoMin: number
-  trechos: Trecho[]
-  /** Imagens já coladas na anotação, para apagar se a sessão for descartada. */
-  imagens: string[]
-  anotacao: string
-  /** Depois de encerrar: o resumo ou a anotação. */
-  passo?: 'resumo' | 'nota'
-  /** Reclassificações feitas no resumo. */
-  ajustes?: Record<string, Tipo>
+  /** Minuto do dia em que o dia lógico começa (padrão: 4h). Na virada, a sessão do dia para. */
+  inicioDoDiaMin: number
+  relatos: boolean
+  avisoRelatoFinal: boolean
+  /** Minuto do dia do aviso do relato final. */
+  relatoFinalMin: number
+  /** Atalho global de play/pause ("CommandOrControl+Shift+Space"); `null` desliga. */
+  atalho: string | null
+  iniciarComSistema: boolean
+  voz: boolean
+  modeloVoz: ModeloVoz
 }
 
 export interface Dados {
   materias: Materia[]
   metas: Meta[]
   blocos: BlocoRotina[]
+  objetivos: Objetivo[]
   sessoes: Sessao[]
+  relatos: Relato[]
   regras: Regra[]
   preferencias: Preferencias
-  sessaoAtual: SessaoAtual | null
 }
 
 export const PREFERENCIAS_PADRAO: Preferencias = {
-  duracaoMin: 25,
+  cicloMin: null,
   limiteAusenciaMin: 5,
+  ausenciaLongaMin: 15,
   avisoDistracao: true,
   avisoDistracaoSeg: 60,
+  inicioDoDiaMin: 4 * 60,
+  relatos: true,
+  avisoRelatoFinal: true,
+  relatoFinalMin: 21 * 60 + 30,
+  atalho: null,
+  iniciarComSistema: false,
+  voz: true,
+  modeloVoz: 'base',
 }
 
 const app = (rotulo: string, termos: string[], tipo: Tipo): Regra => ({ id: crypto.randomUUID(), rotulo, campo: 'app', termos, tipo })
@@ -172,30 +249,10 @@ export function dadosIniciais(): Dados {
     ],
     metas: [],
     blocos: [],
+    objetivos: [],
     sessoes: [],
+    relatos: [],
     regras: regrasPadrao(),
     preferencias: PREFERENCIAS_PADRAO,
-    sessaoAtual: null,
-  }
-}
-
-/** Formato da versão 1: tipo foco/fora e regras sem campo. */
-type TipoV1 = 'foco' | Tipo
-const deV1 = (tipo: TipoV1): Tipo => (tipo === 'foco' ? 'estudo' : tipo)
-
-/** Converte o que foi salvo por versões anteriores e completa campos que faltarem. */
-export function atualizarDados(salvo: Partial<Dados> | undefined, versao = VERSAO_DADOS): Dados {
-  if (!salvo) return dadosIniciais()
-  const v1 = versao < 2
-  const ajustesV1 = (a: Record<string, TipoV1>) => Object.fromEntries(Object.entries(a).map(([k, t]) => [k, deV1(t)]))
-  return {
-    materias: salvo.materias ?? [],
-    metas: salvo.metas ?? [],
-    blocos: salvo.blocos ?? [],
-    sessoes: (salvo.sessoes ?? []).map((s) => (v1 ? { ...s, ajustes: ajustesV1(s.ajustes) } : s)),
-    // As regras da v1 eram só de distração por título; as novas trazem também os apps de estudo.
-    regras: v1 || !salvo.regras ? regrasPadrao() : salvo.regras,
-    preferencias: { ...PREFERENCIAS_PADRAO, ...salvo.preferencias },
-    sessaoAtual: salvo.sessaoAtual ?? null,
   }
 }

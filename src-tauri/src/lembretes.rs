@@ -1,5 +1,5 @@
-//! Notificações agendadas: o início dos blocos de estudo da rotina (recorrentes) e avisos avulsos, como o fim da
-//! pausa. Ficam no Rust pelo mesmo motivo do pomodoro: com a janela escondida, os timers do WebView param.
+//! Notificações agendadas: o início dos blocos de estudo da rotina (recorrentes) e avisos avulsos, como o do relato
+//! final. Ficam no Rust pelo mesmo motivo da sessão: com a janela escondida, os timers do WebView param.
 
 use std::collections::HashSet;
 use std::sync::Mutex;
@@ -42,7 +42,7 @@ struct Estado {
 pub struct Lembretes(Mutex<Estado>);
 
 pub fn tick(app: &AppHandle) {
-    let estudando = app.state::<Rastreador>().rodando();
+    let estudando = app.state::<Rastreador>().sessao_aberta();
     let agora = Local::now();
     let hoje = agora.date_naive().to_string();
     let dia = agora.weekday().num_days_from_sunday();
@@ -60,7 +60,7 @@ pub fn tick(app: &AppHandle) {
             .map(|l| (format!("{}@{hoje}", l.id), l.titulo.clone(), l.corpo.clone()))
             .collect();
         for (chave, titulo, corpo) in devidos {
-            // Quem já está num pomodoro não precisa ser lembrado de começar.
+            // Quem já está com a sessão do dia rodando não precisa ser lembrado de começar.
             if e.disparados.insert(chave) && !estudando {
                 mostrar.push((titulo, corpo));
             }

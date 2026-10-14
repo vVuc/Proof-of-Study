@@ -45,7 +45,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libasound2-dev
 
       - uses: actions/setup-node@v5
         with:
@@ -62,11 +62,18 @@ jobs:
 
       - run: npm run lint
 
-      - name: Testes do Rust
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+      - name: Tipos e testes do front
+        run: |
+          npx tsc -b
+          npm test
+
+      - name: Testes e Clippy do Rust
+        run: |
+          cargo test --manifest-path src-tauri/Cargo.toml --features voz
+          cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --features voz -- -D warnings
 
       # O Tauri roda antes o "npm run build" (typecheck + Vite), definido em beforeBuildCommand.
-      - run: npm run desktop:build -- --bundles ${{ matrix.pacotes }}
+      - run: npm run desktop:build -- --bundles ${{ matrix.pacotes }} --features voz
 
       - uses: actions/upload-artifact@v4
         with:

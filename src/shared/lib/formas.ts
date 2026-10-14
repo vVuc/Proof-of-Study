@@ -10,9 +10,11 @@ export interface FormaDaPagina {
 
 /** Forma de cada tela: no menu ela substitui o ícone, e se repete ao lado do título. */
 export const FORMA_PAGINA = {
+  hoje: { forma: 'circulo', cor: 'amarelo' },
   rotina: { forma: 'quadrado', cor: 'vermelho' },
   banco: { forma: 'semicirculo', cor: 'amarelo' },
   sessao: { forma: 'circulo', cor: 'azul' },
-  historico: { forma: 'quarto', cor: 'azul' },
+  relato: { forma: 'triangulo', cor: 'vermelho' },
+  autoanalise: { forma: 'quarto', cor: 'azul' },
   apps: { forma: 'triangulo', cor: 'tinta' },
 } as const satisfies Record<string, FormaDaPagina>

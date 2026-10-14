@@ -1,38 +1,52 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useAgora } from '@/shared/hooks/useAgora'
+import { diaLogico } from '@/shared/lib/datas'
+import { registrarEvento } from '@/shared/lib/eventos'
 import { useDados } from '@/store/context/dados-context'
-import type { Sessao, Tipo } from '@/store/model/dados'
-import { excluirImagem } from '@/features/imagens/api/imagens'
+import type { Trecho } from '@/store/model/dados'
+import { configuracaoDoRastreio, objetivosDaRotina, sessaoParaGravar } from '@/features/hoje/utils/dia'
 import {
+  configurarRastreio,
+  confirmarSessao,
   definirCaptura,
-  estenderRastreio,
-  iniciarRastreio,
+  fecharDoDia,
   lerRastreio,
-  pararRastreio,
-  pausarRastreio,
-  retomarRastreio,
+  marcarRecuperacaoVista,
+  pausarDoDia,
+  playDoDia,
   type Retrato,
 } from '../api/rastreio'
-import { ordenarRegras } from '../utils/classificacao'
-import { ajustesMudados, resumir } from '../utils/resumo'
-import { SessaoContext, type ContextoSessao, type Etapa } from './sessao-context'
-
-/** De quanto em quanto tempo os trechos vão para o arquivo, para não perder a sessão se o app fechar. */
-const COPIA_A_CADA_MS = 30_000
+import { SessaoContext, type ContextoSessao } from './sessao-context'
 
 /**
- * O pomodoro roda no Rust; aqui a tela lê o estado a cada segundo e guarda a sessão em `dados.sessaoAtual`.
- * Fica na raiz do app para o widget, a barra lateral e o aviso funcionarem em qualquer tela.
+ * A sessão do dia roda no Rust (que também a guarda no diário). Aqui a tela lê o estado a cada segundo, só com os
+ * trechos novos, manda as regras e preferências quando mudam e grava no `dados.json` as sessões que o Rust fecha.
+ * Fica na raiz do app para o widget, a barra lateral e os avisos funcionarem em qualquer tela.
  */
 export function SessaoProvider({ children }: { children: ReactNode }) {
-  const { dados, dispatch } = useDados()
+  const { dados, dispatch, quandoGravado } = useDados()
   const [retrato, setRetrato] = useState<Retrato | null>(null)
-  const sessao = dados.sessaoAtual
-  const ultimaCopia = useRef(0)
+  const [trechos, setTrechos] = useState<Trecho[]>([])
+  const trechosRef = useRef<Trecho[]>([])
+  const sessaoId = useRef<string | null>(null)
+  const fila = useRef<Promise<unknown>>(Promise.resolve())
+  const agora = useAgora(60_000)
+  const hoje = diaLogico(agora.getTime(), dados.preferencias.inicioDoDiaMin)
+  const dia = retrato?.sessao?.dia ?? hoje
 
-  const ler = useCallback(async () => {
-    const lido = await lerRastreio()
-    setRetrato(lido)
-    return lido
+  // Uma leitura por vez: cada uma parte dos trechos que a anterior deixou.
+  const ler = useCallback(() => {
+    const leitura = fila.current.then(async () => {
+      const lido = await lerRastreio(trechosRef.current.length)
+      const id = lido.sessao?.id ?? null
+      const anteriores = id === sessaoId.current ? trechosRef.current.slice(0, lido.base) : []
+      sessaoId.current = id
+      trechosRef.current = [...anteriores, ...lido.trechos]
+      setTrechos(trechosRef.current)
+      setRetrato(lido)
+    })
+    fila.current = leitura.catch(() => undefined)
+    return leitura
   }, [])
 
   useEffect(() => {
@@ -46,136 +60,64 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
     }
   }, [ler])
 
-  // Ao abrir: o Rust registrando sem sessão salva (ex.: dados apagados) para, para não registrar à toa.
-  const conferido = useRef(false)
+  // Regras, termos e preferências valem na hora, também para a bandeja e o atalho global.
+  const config = useMemo(() => configuracaoDoRastreio(dados, dia), [dados, dia])
+  const configTexto = JSON.stringify(config)
   useEffect(() => {
-    if (!retrato || conferido.current) return
-    conferido.current = true
-    if (!sessao && retrato.fase !== 'parado') void pararRastreio().then(ler)
-  }, [retrato, sessao, ler])
+    void configurarRastreio(JSON.parse(configTexto))
+  }, [configTexto])
 
-  // Cópia de segurança dos trechos.
+  // Os objetivos que a rotina sugere para hoje entram sozinhos (os pulados não voltam).
+  const novosDaRotina = useMemo(() => objetivosDaRotina(dados, hoje), [dados, hoje])
   useEffect(() => {
-    if (!retrato || !sessao || retrato.fase === 'parado') return
-    const agora = Date.now()
-    const acabou = retrato.fase === 'concluido' && sessao.trechos.length !== retrato.trechos.length
-    if (acabou || agora - ultimaCopia.current >= COPIA_A_CADA_MS) {
-      ultimaCopia.current = agora
-      dispatch({ tipo: 'sessaoAtual/atualizar', mudancas: { trechos: retrato.trechos } })
+    if (novosDaRotina.length > 0) dispatch({ tipo: 'objetivos/salvar', objetivos: novosDaRotina })
+  }, [novosDaRotina, dispatch])
+
+  // Sessões fechadas pelo Rust: grava no `dados.json` e só então confirma, para o Rust tirar do diário.
+  const entregando = useRef(new Set<string>())
+  useEffect(() => {
+    for (const fechada of retrato?.fechadas ?? []) {
+      if (entregando.current.has(fechada.id)) continue
+      entregando.current.add(fechada.id)
+      if (!dados.sessoes.some((s) => s.id === fechada.id)) {
+        const sessao = sessaoParaGravar(fechada, dados)
+        dispatch({ tipo: 'sessao/salvar', sessao })
+        registrarEvento('sessao.gravada', { dia: sessao.dia, trechos: sessao.trechos.length, pausas: sessao.pausas.length })
+      }
+      void quandoGravado((d) => d.sessoes.some((s) => s.id === fechada.id))
+        .then(() => confirmarSessao(fechada.id))
+        .finally(() => entregando.current.delete(fechada.id))
     }
-  }, [retrato, sessao, dispatch])
+  }, [retrato?.fechadas, dados, dispatch, quandoGravado])
 
-  const etapa: Etapa | null = !retrato
-    ? null
-    : !sessao
-      ? 'pronto'
-      : retrato.fase === 'rodando'
-        ? 'rodando'
-        : retrato.fase === 'pausado'
-          ? 'pausado'
-          : (sessao.passo ?? 'resumo')
-  const trechos = useMemo(
-    () => (sessao && retrato && retrato.fase !== 'parado' ? retrato.trechos : (sessao?.trechos ?? [])),
-    [sessao, retrato],
-  )
-
-  const iniciar = useCallback(
-    async (materiaId: string, duracaoMin: number) => {
-      const materia = dados.materias.find((m) => m.id === materiaId)
-      const p = dados.preferencias
-      await iniciarRastreio({
-        duracaoMs: duracaoMin * 60_000,
-        limiteAusenciaSeg: p.limiteAusenciaMin * 60,
-        avisoDistracaoSeg: p.avisoDistracao ? p.avisoDistracaoSeg : null,
-        regras: ordenarRegras(dados.regras).map(({ rotulo, termos, campo, tipo }) => ({ rotulo, termos, campo, tipo })),
-        materia: materia?.nome ?? 'estudo',
-      })
-      // Lê antes de guardar a sessão, para a tela não passar pelo resumo com o retrato antigo.
-      const lido = await lerRastreio()
-      ultimaCopia.current = Date.now()
-      setRetrato(lido)
-      dispatch({
-        tipo: 'sessaoAtual/definir',
-        sessao: { id: crypto.randomUUID(), materiaId, inicio: Date.now(), duracaoMin, trechos: [], imagens: [], anotacao: '' },
-      })
+  const agir = useCallback(
+    async (acao: () => Promise<unknown>) => {
+      await acao()
+      await ler()
     },
-    [dados.materias, dados.preferencias, dados.regras, dispatch],
+    [ler],
   )
-
-  const encerrar = useCallback(async () => {
-    const final = await pararRastreio()
-    dispatch({ tipo: 'sessaoAtual/atualizar', mudancas: { trechos: final, passo: 'resumo' } })
-    await ler()
-  }, [dispatch, ler])
-
-  const ajustar = useCallback(
-    (chave: string, tipo: Tipo) =>
-      dispatch({ tipo: 'sessaoAtual/atualizar', mudancas: { ajustes: { ...sessao?.ajustes, [chave]: tipo } } }),
-    [sessao?.ajustes, dispatch],
-  )
-
-  const salvar = useCallback(async () => {
-    if (!sessao) return null
-    const final = retrato && retrato.fase !== 'parado' ? await pararRastreio() : sessao.trechos
-    const resumo = resumir(final, dados.regras, sessao.ajustes)
-    const salva: Sessao = {
-      id: sessao.id,
-      materiaId: sessao.materiaId,
-      inicio: sessao.inicio,
-      fim: final.at(-1)?.fim ?? Date.now(),
-      duracaoPlanejadaMin: sessao.duracaoMin,
-      trechos: final,
-      ajustes: ajustesMudados(resumo.grupos, sessao.ajustes ?? {}),
-      focoMs: resumo.focoMs,
-      foraMs: resumo.foraMs,
-      anotacao: sessao.anotacao.trim(),
-      imagens: sessao.imagens,
-    }
-    dispatch({ tipo: 'sessao/salvar', sessao: salva })
-    dispatch({ tipo: 'sessaoAtual/definir', sessao: null })
-    await ler()
-    return salva
-  }, [sessao, retrato, dados.regras, dispatch, ler])
-
-  const descartar = useCallback(async () => {
-    if (retrato && retrato.fase !== 'parado') await pararRastreio()
-    sessao?.imagens.forEach((nome) => void excluirImagem(nome))
-    dispatch({ tipo: 'sessaoAtual/definir', sessao: null })
-    await ler()
-  }, [retrato, sessao, dispatch, ler])
 
   const valor = useMemo<ContextoSessao>(
     () => ({
-      etapa,
+      fase: retrato?.fase ?? null,
       retrato,
-      sessao,
+      sessao: retrato?.sessao ?? null,
       trechos,
-      podeEstender: retrato?.fase === 'concluido',
-      iniciar,
-      pausar: async () => {
-        await pausarRastreio()
-        await ler()
-      },
-      retomar: async () => {
-        await retomarRastreio()
-        await ler()
-      },
-      alternarCaptura: async () => {
-        await definirCaptura(!retrato?.captura)
-        await ler()
-      },
-      estender: async (minutos) => {
-        await estenderRastreio(minutos * 60_000)
-        await ler()
-      },
-      encerrar,
-      ajustar,
-      irParaNota: () => dispatch({ tipo: 'sessaoAtual/atualizar', mudancas: { passo: 'nota' } }),
-      voltarAoResumo: () => dispatch({ tipo: 'sessaoAtual/atualizar', mudancas: { passo: 'resumo' } }),
-      salvar,
-      descartar,
+      pausas: retrato?.pausas ?? [],
+      hoje,
+      play: () =>
+        agir(async () => {
+          // A configuração vai antes, para o primeiro play logo depois de abrir o app.
+          await configurarRastreio(config)
+          await playDoDia()
+        }),
+      pausar: () => agir(pausarDoDia),
+      alternarCaptura: () => agir(() => definirCaptura(!retrato?.captura)),
+      fecharDia: () => agir(fecharDoDia),
+      dispensarRecuperacao: () => agir(marcarRecuperacaoVista),
     }),
-    [etapa, retrato, sessao, trechos, iniciar, encerrar, ajustar, salvar, descartar, ler, dispatch],
+    [retrato, trechos, hoje, agir, config],
   )
 
   return <SessaoContext.Provider value={valor}>{children}</SessaoContext.Provider>

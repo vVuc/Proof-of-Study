@@ -29,7 +29,7 @@ async function tentar(acao: () => Promise<unknown>) {
 
 /**
  * "Virar widget": a mesma janela encolhe para um cartão de 320px no canto da tela, sempre por cima das outras,
- * com o relógio do pomodoro. Restaurar volta ao tamanho e ao lugar de antes.
+ * com o tempo do dia e o play/pause. Restaurar volta ao tamanho e ao lugar de antes.
  */
 export function JanelaProvider({ children }: { children: ReactNode }) {
   const [widget, setWidget] = useState(false)

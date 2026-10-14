@@ -10,7 +10,7 @@ import { ITENS_MENU } from './itens-menu'
 
 /** Layout 1a: abas em bloco, uma por tela, e o cartão da meta da semana no rodapé. */
 export function BarraLateral() {
-  const { etapa } = useSessao()
+  const { fase } = useSessao()
   return (
     <nav className="flex w-[220px] shrink-0 flex-col gap-2.5 border-r-2 border-contorno p-4">
       {ITENS_MENU.map(({ to, rotulo, forma }) => (
@@ -30,8 +30,8 @@ export function BarraLateral() {
             className={forma.forma === 'semicirculo' ? 'w-3.5' : 'size-3.5'}
           />
           <span className="flex-1">{rotulo}</span>
-          {to === '/sessao' && etapa === 'rodando' && (
-            <span aria-label="Sessão em andamento" className="size-2 border-[1.5px] border-contorno bg-vermelho" />
+          {to === '/sessao' && fase === 'rodando' && (
+            <span aria-label="Sessão do dia capturando" className="size-2 border-[1.5px] border-contorno bg-vermelho" />
           )}
         </Link>
       ))}

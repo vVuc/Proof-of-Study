@@ -1,12 +1,18 @@
-import { inicioDaSemana, somarSemanas, type DataISO } from '@/shared/lib/datas'
+import { deISO, inicioDaSemana, somarSemanas, type DataISO } from '@/shared/lib/datas'
 import { fracao } from '@/shared/lib/percentual'
 import type { Dados, Materia, Meta, Sessao } from '@/store/model/dados'
-import { focoNoBanco, taxaDeFoco } from '@/features/sessao/utils/resumo'
+import { taxaDeFoco } from '@/features/sessao/utils/resumo'
+import { focoDaMateria, focoNoBanco, focoNoBancoTotal } from './validacao'
 
-export const semanaDaSessao = (s: Pick<Sessao, 'inicio'>) => inicioDaSemana(new Date(s.inicio))
+/** A semana da sessão é a do dia lógico dela. */
+export const semanaDaSessao = (s: Pick<Sessao, 'dia'>) => inicioDaSemana(deISO(s.dia))
 
 export const sessoesDaSemana = (sessoes: Sessao[], semana: DataISO) =>
   sessoes.filter((s) => semanaDaSessao(s) === semana).sort((a, b) => b.inicio - a.inicio)
+
+/** Sessões da semana em que a matéria recebeu algum estudo. */
+export const sessoesDaMateria = (sessoes: Sessao[], materiaId: string, semana: DataISO) =>
+  sessoesDaSemana(sessoes, semana).filter((s) => focoDaMateria(s, materiaId) > 0)
 
 export const metaDaSemana = (metas: Meta[], materiaId: string, semana: DataISO) =>
   metas.find((m) => m.materiaId === materiaId && m.semana === semana)
@@ -20,19 +26,19 @@ export const ultimaMeta = (metas: Meta[], materiaId: string, semana: DataISO) =>
 export interface SaldoMateria {
   materia: Materia
   meta?: Meta
-  /** Foco das sessões com anotação: o que entrou no banco. */
+  /** Estudo validado (relato final do dia ou anotação da sessão): o que entrou no banco. */
   noBancoMs: number
-  /** Foco de sessões sem anotação, que ainda não entrou. */
+  /** Estudo que ainda espera o relato do dia ou uma anotação. */
   pendenteMs: number
   sessoes: number
   progresso: number
 }
 
 export function saldoDaMateria(dados: Dados, materia: Materia, semana: DataISO): SaldoMateria {
-  const daSemana = sessoesDaSemana(dados.sessoes, semana).filter((s) => s.materiaId === materia.id)
+  const daSemana = sessoesDaMateria(dados.sessoes, materia.id, semana)
   const meta = metaDaSemana(dados.metas, materia.id, semana)
-  const noBancoMs = daSemana.reduce((soma, s) => soma + focoNoBanco(s), 0)
-  const pendenteMs = daSemana.reduce((soma, s) => soma + (s.focoMs - focoNoBanco(s)), 0)
+  const noBancoMs = daSemana.reduce((soma, s) => soma + focoNoBanco(dados, s, materia.id), 0)
+  const pendenteMs = daSemana.reduce((soma, s) => soma + focoDaMateria(s, materia.id), 0) - noBancoMs
   return {
     materia,
     meta,
@@ -43,13 +49,10 @@ export function saldoDaMateria(dados: Dados, materia: Materia, semana: DataISO):
   }
 }
 
-/** Matérias visíveis numa semana: as ativas e as arquivadas que tiveram sessão ou meta nela. */
+/** Matérias visíveis numa semana: as ativas e as arquivadas que tiveram estudo ou meta nela. */
 export function materiasDaSemana(dados: Dados, semana: DataISO): Materia[] {
   return dados.materias.filter(
-    (m) =>
-      !m.arquivada ||
-      sessoesDaSemana(dados.sessoes, semana).some((s) => s.materiaId === m.id) ||
-      metaDaSemana(dados.metas, m.id, semana),
+    (m) => !m.arquivada || sessoesDaMateria(dados.sessoes, m.id, semana).length > 0 || metaDaSemana(dados.metas, m.id, semana),
   )
 }
 
@@ -89,12 +92,12 @@ export function evolucao(dados: Dados, semanaAtual: DataISO, limite = 12): Linha
       semana,
       focoMs,
       foraMs,
-      noBancoMs: daSemana.reduce((s, x) => s + focoNoBanco(x), 0),
+      noBancoMs: daSemana.reduce((s, x) => s + focoNoBancoTotal(dados, x), 0),
       metaMs: metas.reduce((s, m) => s + m.minutos * 60_000, 0),
       etapas: metas.map((m) => m.descricao || dados.materias.find((x) => x.id === m.materiaId)?.nome || '').filter(Boolean),
       percentualFoco: taxaDeFoco(focoMs, foraMs),
       sessoes: daSemana.length,
-      dias: new Set(daSemana.map((s) => new Date(s.inicio).toDateString())).size,
+      dias: new Set(daSemana.map((s) => s.dia)).size,
       metas: metas.length,
       metasCumpridas,
     })

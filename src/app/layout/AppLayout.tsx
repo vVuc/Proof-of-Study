@@ -1,29 +1,14 @@
-import { useEffect, useRef } from 'react'
-import { Outlet, useNavigate } from '@tanstack/react-router'
+import { Outlet } from '@tanstack/react-router'
 import { AvisoHoraDeEstudo } from '@/features/rotina/components/AvisoHoraDeEstudo'
-import { useSessao, type Etapa } from '@/features/sessao/context/sessao-context'
 import { Widget } from '@/features/sessao/components/Widget'
 import { useJanela } from '../janela/janela-context'
+import { AvisoMigracao, AvisoRecuperacao } from './Avisos'
 import { BarraLateral } from './BarraLateral'
 import { BarraTitulo } from './BarraTitulo'
 
 /** Layout 1a: barra de título, barra lateral com as telas e a meta, e a tela aberta à direita. */
 export function AppLayout() {
-  const { widget, restaurar } = useJanela()
-  const { etapa } = useSessao()
-  const navigate = useNavigate()
-  const etapaAnterior = useRef<Etapa | null>(null)
-
-  // Quando o pomodoro acaba (pelo tempo ou no widget), a janela volta e abre o resumo.
-  useEffect(() => {
-    const antes = etapaAnterior.current
-    etapaAnterior.current = etapa
-    if (etapa === 'resumo' && (antes === 'rodando' || antes === 'pausado')) {
-      if (widget) void restaurar()
-      void navigate({ to: '/sessao' })
-    }
-  }, [etapa, widget, restaurar, navigate])
-
+  const { widget } = useJanela()
   if (widget) return <Widget />
 
   return (
@@ -32,10 +17,14 @@ export function AppLayout() {
       <div className="flex min-h-0 flex-1">
         <BarraLateral />
         <main className="relative min-w-0 flex-1 overflow-auto p-4">
+          <AvisoMigracao />
           <Outlet />
         </main>
       </div>
-      <AvisoHoraDeEstudo />
+      <div className="absolute right-6 bottom-6 z-40 flex w-[330px] flex-col gap-3">
+        <AvisoRecuperacao />
+        <AvisoHoraDeEstudo />
+      </div>
     </div>
   )
 }

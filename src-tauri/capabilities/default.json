@@ -17,6 +17,7 @@
     "core:window:allow-set-resizable",
     "core:window:allow-unmaximize",
     "store:default",
-    "notification:default"
+    "notification:default",
+    "autostart:default"
   ]
 }

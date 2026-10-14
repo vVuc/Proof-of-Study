@@ -1,6 +1,7 @@
 # Gera os instaladores do app desktop (Windows e Linux) e publica numa Release do GitHub.
 # Dispara ao enviar uma tag de versão: git tag v0.2.0 && git push origin v0.2.0
 # A tag precisa ser igual à versão do package.json (com "v" na frente).
+# Tag com hífen (v0.4.0-beta.1) vira pre-release: as betas do piloto não aparecem como a versão mais recente.
 
 name: Release desktop
 
@@ -48,6 +49,7 @@ jobs:
               tag_name: tag,
               name: `Proof of Study ${tag}`,
               draft: true,
+              prerelease: tag.includes('-'),
               generate_release_notes: true,
               body: [
                 '## Como instalar',
@@ -67,7 +69,7 @@ jobs:
                 '- **Outras distros:** o `.AppImage` (`chmod +x` e abrir).',
                 '- **Wayland:** a janela ativa só é lida em apps do XWayland. Para o registro completo, entre na sessão **X11** ("GNOME em Xorg", "Plasma (X11)").',
                 '',
-                'Durante o pomodoro, o app lê só o **título da janela ativa** e o **nome do programa**. Nada de teclas, imagens da tela ou URL, e tudo fica só no seu computador.',
+                'Com a sessão do dia aberta, o app lê só o **título da janela ativa** e o **nome do programa**. Nada de teclas, imagens da tela ou URL, e tudo fica só no seu computador. A voz do relato é transcrita no próprio PC; o único download é o modelo de voz, se você quiser usar.',
               ].join('\n'),
             })
             return data.id
@@ -94,7 +96,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libasound2-dev
 
       - uses: actions/setup-node@v5
         with:
@@ -109,8 +111,15 @@ jobs:
 
       - run: npm ci
 
+      - run: npm run lint
+
+      - name: Tipos e testes do front
+        run: |
+          npx tsc -b
+          npm test
+
       - name: Testes do Rust
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+        run: cargo test --manifest-path src-tauri/Cargo.toml --features voz
 
       # Compila e sobe os instaladores na release criada acima.
       - uses: tauri-apps/tauri-action@v0
@@ -118,7 +127,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           releaseId: ${{ needs.criar-release.outputs.id }}
-          args: --bundles ${{ matrix.pacotes }}
+          args: --bundles ${{ matrix.pacotes }} --features voz
 
   publicar:
     name: Publicar release
@@ -128,9 +137,10 @@ jobs:
       - uses: actions/github-script@v8
         with:
           script: |
+            const beta = context.ref.replace('refs/tags/', '').includes('-')
             await github.rest.repos.updateRelease({
               ...context.repo,
               release_id: Number('${{ needs.criar-release.outputs.id }}'),
               draft: false,
-              make_latest: 'true',
+              make_latest: beta ? 'false' : 'true',
             })

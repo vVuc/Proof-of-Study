@@ -12,6 +12,7 @@ import { imagensDoEvento, useAcrescentarImagens } from '@/features/imagens/hooks
 import { BarraFaixas, LinhaGrupo } from '@/features/sessao/components/partes'
 import { rotuloDaSessao } from '@/features/sessao/utils/rotulos'
 import { resumir } from '@/features/sessao/utils/resumo'
+import { contextoDoDia } from '@/features/hoje/utils/dia'
 
 /** Abre uma sessão salva: a evidência (editável) e para onde foi o tempo. */
 export function DialogSessao({ sessao, onClose }: { sessao: Sessao | null; onClose: () => void }) {
@@ -30,7 +31,7 @@ function Conteudo({ sessao, onClose }: { sessao: Sessao; onClose: () => void }) 
   const [imagens, setImagens] = useState(sessao.imagens)
   const [excluindo, setExcluindo] = useState(false)
   const { acrescentar } = useAcrescentarImagens(imagens, setImagens)
-  const resumo = resumir(sessao.trechos, dados.regras, sessao.ajustes)
+  const resumo = resumir(sessao.trechos, contextoDoDia(dados, sessao.dia), sessao.ajustes)
 
   function salvar() {
     sessao.imagens.filter((i) => !imagens.includes(i)).forEach((i) => void excluirImagem(i))
@@ -63,7 +64,7 @@ function Conteudo({ sessao, onClose }: { sessao: Sessao; onClose: () => void }) 
             }
           }}
           rows={4}
-          placeholder="O que você estudou nesta sessão?"
+          placeholder="O que você estudou nesta sessão? (O relato final do dia também vale como evidência.)"
           className="resize-y border-2 border-input bg-card p-3 text-sm outline-none focus-visible:shadow-[3px_3px_0_0_var(--ring)]"
         />
       </label>

@@ -7,7 +7,7 @@ import { useJanela } from '../janela/janela-context'
 
 /**
  * Barra de título do app (a do sistema fica escondida): a marca, que também arrasta a janela, e os botões
- * em blocos. O primeiro vira widget; fechar esconde na bandeja, e o pomodoro continua.
+ * em blocos. O primeiro vira widget; fechar esconde na bandeja, e a sessão do dia continua.
  */
 export function BarraTitulo() {
   const { virarWidget } = useJanela()

@@ -14,17 +14,18 @@ import { estudoDeHoje } from '../utils/rotina'
 const ADIAR_MS = 10 * 60_000
 
 /**
- * "Hora do estudo": aparece dentro do app enquanto um bloco de estudo da rotina está acontecendo e não há
- * pomodoro. Fecha por hoje no ✕ ou volta em 10 min. (Com o app escondido, quem avisa é a notificação do sistema.)
+ * "Hora do estudo": aparece dentro do app enquanto um item de estudo com horário está acontecendo e a sessão do
+ * dia não está rodando. Fecha por hoje no ✕ ou volta em 10 min. (Com o app escondido, quem avisa é a
+ * notificação do sistema.)
  */
 export function AvisoHoraDeEstudo() {
   const { dados } = useDados()
-  const { etapa, iniciar } = useSessao()
+  const { fase, play } = useSessao()
   const navigate = useNavigate()
   const agora = useAgora(15_000)
   const [fechados, setFechados] = useState<Record<string, number>>({})
   const { atual } = estudoDeHoje(dados.blocos, agora)
-  if (!atual || etapa !== 'pronto') return null
+  if (!atual || (fase !== 'parado' && fase !== 'pausado')) return null
 
   const chave = `${atual.bloco.id}@${paraISO(agora)}`
   if ((fechados[chave] ?? 0) > agora.getTime()) return null
@@ -35,14 +36,12 @@ export function AvisoHoraDeEstudo() {
   const fechar = (ate: number) => setFechados((f) => ({ ...f, [chave]: ate }))
 
   async function comecar() {
-    const materiaId = materia?.id ?? dados.materias.find((m) => !m.arquivada)?.id
-    if (!materiaId) return void navigate({ to: '/banco' })
-    await iniciar(materiaId, dados.preferencias.duracaoMin)
-    void navigate({ to: '/sessao' })
+    await play()
+    void navigate({ to: '/' })
   }
 
   return (
-    <div role="status" className="absolute right-6 bottom-6 z-40 w-[330px] border-2 border-contorno bg-card shadow-bloco-lg">
+    <div role="status" className="border-2 border-contorno bg-card shadow-bloco-lg">
       <FaixaPrimarias />
       <div className="flex flex-col gap-2 px-3.5 py-3">
         <div className="flex items-center justify-between">
@@ -71,7 +70,7 @@ export function AvisoHoraDeEstudo() {
         </p>
         <div className="flex gap-2.5 pt-0.5">
           <Button className={cn(BOTAO, 'h-9 px-3 text-[0.6875rem]')} onClick={() => void comecar()}>
-            Iniciar pomodoro
+            {fase === 'pausado' ? 'Continuar o dia' : 'Play no dia'}
           </Button>
           <Button variant="outline" className={cn(BOTAO, 'h-9 px-3 text-[0.6875rem]')} onClick={() => fechar(Date.now() + ADIAR_MS)}>
             Em 10 min

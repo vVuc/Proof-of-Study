@@ -17,7 +17,7 @@ export function PontoTipo({ tipo, className }: { tipo: Tipo; className?: string 
 
 /**
  * Linha do tempo em blocos (estudo azul, fora vermelho, ignorado cinza), separados por réguas pretas.
- * Com `totalMs`, a largura é relativa ao pomodoro inteiro e o resto fica vazio; sem ele, ocupa tudo.
+ * Com `totalMs`, a largura é relativa a esse total e o resto fica vazio; sem ele, ocupa tudo.
  */
 export function BarraFaixas({ faixas, totalMs, className }: { faixas: Faixa[]; totalMs?: number; className?: string }) {
   const base = totalMs ?? faixas.reduce((s, f) => s + f.ms, 0)

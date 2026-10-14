@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { ControleSegmentado } from '@/shared/components/ControleSegmentado'
 import { PontoCor } from '@/shared/components/PontoCor'
 import { DIAS_SEMANA, formatarHorario, lerHorario } from '@/shared/lib/datas'
 import { BOTAO, CAMADA, CAMPO, CAMPO_SELECT, ROTULO, RODAPE_DIALOG } from '@/shared/lib/estilos'
@@ -17,9 +18,11 @@ import { duracaoBloco } from '../utils/rotina'
 const SEM_MATERIA = 'nenhuma'
 const DIAS_UTEIS = [1, 2, 3, 4, 5]
 
+/** Bloco a editar, ou o rascunho de um novo (sem id). `semHorario` abre o rascunho já como objetivo sem horário. */
+export type RascunhoBloco = Partial<BlocoRotina> & { semHorario?: boolean }
+
 interface DialogBlocoProps {
-  /** Bloco a editar, ou o rascunho de um novo (sem id). */
-  bloco: Partial<BlocoRotina> | null
+  bloco: RascunhoBloco | null
   onClose: () => void
 }
 
@@ -33,7 +36,7 @@ export function DialogBloco({ bloco, onClose }: DialogBlocoProps) {
   )
 }
 
-function FormularioBloco({ inicial, onClose }: { inicial: Partial<BlocoRotina>; onClose: () => void }) {
+function FormularioBloco({ inicial, onClose }: { inicial: RascunhoBloco; onClose: () => void }) {
   const { dados, dispatch } = useDados()
   const materias = dados.materias.filter((m) => !m.arquivada || m.id === inicial.materiaId)
   const [titulo, setTitulo] = useState(inicial.titulo ?? '')
@@ -43,6 +46,7 @@ function FormularioBloco({ inicial, onClose }: { inicial: Partial<BlocoRotina>; 
   const [inicio, setInicio] = useState(formatarHorario(inicial.inicio ?? 19 * 60))
   const [fim, setFim] = useState(formatarHorario(inicial.fim ?? 20 * 60))
   const [avisar, setAvisar] = useState(inicial.avisar ?? true)
+  const [comHorario, setComHorario] = useState(inicial.id ? inicial.inicio !== undefined : !inicial.semHorario)
   const [erro, setErro] = useState<string | null>(null)
 
   const estudo = categoria === 'estudo'
@@ -57,7 +61,8 @@ function FormularioBloco({ inicial, onClose }: { inicial: Partial<BlocoRotina>; 
 
   function salvar(e: FormEvent) {
     e.preventDefault()
-    if (minInicio === null || minFim === null || minInicio === minFim) return setErro('Confira o horário de início e de fim.')
+    if (comHorario && (minInicio === null || minFim === null || minInicio === minFim))
+      return setErro('Confira o horário de início e de fim.')
     if (dias.length === 0) return setErro('Escolha pelo menos um dia.')
     const nome = titulo.trim() || materia?.nome || CATEGORIAS[categoria].nome
     dispatch({
@@ -67,10 +72,10 @@ function FormularioBloco({ inicial, onClose }: { inicial: Partial<BlocoRotina>; 
         titulo: nome,
         categoria,
         dias: [...dias].sort(),
-        inicio: minInicio,
-        fim: minFim,
+        inicio: comHorario ? (minInicio ?? undefined) : undefined,
+        fim: comHorario ? (minFim ?? undefined) : undefined,
         materiaId: materia?.id,
-        avisar: estudo && avisar,
+        avisar: estudo && comHorario && avisar,
       },
     })
     onClose()
@@ -79,8 +84,10 @@ function FormularioBloco({ inicial, onClose }: { inicial: Partial<BlocoRotina>; 
   return (
     <form onSubmit={salvar} className="flex flex-col gap-4">
       <DialogHeader>
-        <DialogTitle>{inicial.id ? 'Editar bloco' : 'Novo bloco'}</DialogTitle>
-        <DialogDescription>Um horário que se repete toda semana.</DialogDescription>
+        <DialogTitle>{inicial.id ? 'Editar item da rotina' : 'Novo item da rotina'}</DialogTitle>
+        <DialogDescription>
+          Algo que se repete toda semana. Sem horário, vira um objetivo naqueles dias, sem pressão de hora marcada.
+        </DialogDescription>
       </DialogHeader>
 
       <fieldset className="flex flex-col gap-2">
@@ -174,24 +181,41 @@ function FormularioBloco({ inicial, onClose }: { inicial: Partial<BlocoRotina>; 
         </div>
       </fieldset>
 
-      <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-2">
-          <span className={ROTULO}>Começa</span>
-          <Input type="time" className={CAMPO} value={inicio} onChange={(e) => setInicio(e.target.value)} required />
-        </label>
-        <label className="flex flex-col gap-2">
-          <span className={ROTULO}>Termina</span>
-          <Input type="time" className={CAMPO} value={fim} onChange={(e) => setFim(e.target.value)} required />
-        </label>
+      <div className="flex flex-col gap-2">
+        <span className={ROTULO}>Horário</span>
+        <ControleSegmentado
+          rotulo="Horário"
+          valor={comHorario ? 'com' : 'sem'}
+          onChange={(v) => setComHorario(v === 'com')}
+          opcoes={[
+            { valor: 'com', rotulo: 'Com horário' },
+            { valor: 'sem', rotulo: 'Sem horário' },
+          ]}
+        />
       </div>
-      {duracao > 0 && (
-        <p className="-mt-2 text-xs text-muted-foreground">
-          {formatarHorario(duracao).replace(':', 'h')} por dia
-          {minFim !== null && minInicio !== null && minFim < minInicio && ', passando da meia-noite'}
-        </p>
+
+      {comHorario && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-2">
+              <span className={ROTULO}>Começa</span>
+              <Input type="time" className={CAMPO} value={inicio} onChange={(e) => setInicio(e.target.value)} required />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className={ROTULO}>Termina</span>
+              <Input type="time" className={CAMPO} value={fim} onChange={(e) => setFim(e.target.value)} required />
+            </label>
+          </div>
+          {duracao > 0 && (
+            <p className="-mt-2 text-xs text-muted-foreground">
+              {formatarHorario(duracao).replace(':', 'h')} por dia
+              {minFim !== null && minInicio !== null && minFim < minInicio && ', passando da meia-noite'}
+            </p>
+          )}
+        </>
       )}
 
-      {estudo && (
+      {estudo && comHorario && (
         <label className="flex items-center gap-2 text-sm">
           <Checkbox checked={avisar} onCheckedChange={(v) => setAvisar(v === true)} />
           Avisar quando o bloco começar

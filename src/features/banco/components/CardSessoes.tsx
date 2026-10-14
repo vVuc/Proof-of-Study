@@ -1,24 +1,30 @@
 import { useState } from 'react'
 import { CabecalhoCard } from '@/shared/components/CabecalhoCard'
 import { formatarDuracao } from '@/shared/lib/datas'
+import { CARTAO } from '@/shared/lib/estilos'
 import { cn } from '@/shared/lib/utils'
+import { useDados } from '@/store/context/dados-context'
 import type { Sessao } from '@/store/model/dados'
 import { rotuloDaSessao } from '@/features/sessao/utils/rotulos'
 import { temAnotacao } from '@/features/sessao/utils/resumo'
-import { CARTAO } from '@/shared/lib/estilos'
+import { diaValidado, focoDaMateria, relatoDoDia } from '../utils/validacao'
 import { DialogSessao } from './DialogSessao'
 
-/** As sessões da semana com a evidência de cada uma (anotação e imagens) e a barra de foco e fora. */
-export function CardSessoes({ sessoes }: { sessoes: Sessao[] }) {
+/** As sessões da semana com estudo desta matéria, a evidência de cada uma (relato do dia ou anotação) e o tempo. */
+export function CardSessoes({ sessoes, materiaId }: { sessoes: Sessao[]; materiaId: string }) {
+  const { dados } = useDados()
   const [aberta, setAberta] = useState<Sessao | null>(null)
 
   return (
     <div className={CARTAO}>
       <CabecalhoCard titulo="Sessões e evidências" faixa="bg-azul" forma={{ forma: 'circulo', cor: 'papel' }} contagem={sessoes.length} />
-      {sessoes.length === 0 && <p className="px-4 py-3 text-sm text-muted-foreground">Nenhuma sessão nesta semana ainda.</p>}
+      {sessoes.length === 0 && <p className="px-4 py-3 text-sm text-muted-foreground">Nenhuma sessão com esta matéria nesta semana ainda.</p>}
       {sessoes.map((s) => {
         const [dia, horario] = rotuloDaSessao(s.inicio, s.fim).split(' · ')
+        const estudo = focoDaMateria(s, materiaId)
         const total = s.focoMs + s.foraMs
+        const relato = relatoDoDia(dados.relatos, s.dia, 'final')
+        const validadoPeloDia = diaValidado(dados, s.dia)
         return (
           <button
             key={s.id}
@@ -33,8 +39,13 @@ export function CardSessoes({ sessoes }: { sessoes: Sessao[] }) {
             <span className="text-[0.8125rem] leading-normal text-pretty">
               {temAnotacao(s) ? (
                 s.anotacao || <span className="text-muted-foreground">Só imagens.</span>
+              ) : validadoPeloDia ? (
+                <span className="line-clamp-3">
+                  <span className="text-muted-foreground">Relato do dia: </span>
+                  {relato?.texto}
+                </span>
               ) : (
-                <span className="font-semibold text-fora">Sem anotação: fora do banco. Clique para anotar.</span>
+                <span className="font-semibold text-fora">Sem relato do dia nem anotação: fora do banco. Clique para anotar.</span>
               )}
               {s.imagens.length > 0 && (
                 <span className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -49,7 +60,7 @@ export function CardSessoes({ sessoes }: { sessoes: Sessao[] }) {
                 <span className={cn('flex-1', s.foraMs > 0 ? 'bg-vermelho' : 'bg-muted')} />
               </span>
               <span className="flex justify-between text-xs font-medium">
-                <span className="text-foco">{formatarDuracao(s.focoMs)}</span>
+                <span className="text-foco">{formatarDuracao(estudo)} aqui</span>
                 <span className="text-fora">{formatarDuracao(s.foraMs)} fora</span>
               </span>
             </span>
