@@ -37,7 +37,7 @@
 | Pause para o relógio e a captura | Must |
 | Play de novo retoma o tempo do dia de onde parou, inclusive depois de reabrir o app | Must |
 | Só um objetivo rodando por vez; play em outro pausa o atual | Must |
-| Relógio para sozinho por inatividade | Must |
+| Relógio para sozinho por inatividade e volta sozinho no mesmo dia | Must |
 | Relógio para na virada do dia; o dia novo começa zerado | Must |
 | Separar tempo de estudo e fora do estudo pelas regras já existentes | Must |
 | Usar o app sem rotina definida | Must |
@@ -208,7 +208,19 @@ Funcionalidade: Dia de estudo com rotina opcional, cronômetro aberto e relato d
     Quando a pessoa fica 5 minutos sem mexer no teclado e no mouse
     Então o relógio de "Inglês" para em 00:40:00
     E os 5 minutos parados não contam como estudo
-    # SUPOSIÇÃO: ao mexer de novo, o relógio volta a contar sozinho (confirmar, pergunta 2)
+
+  @must
+  Cenário: Relógio volta sozinho depois da inatividade no mesmo dia
+    Dado que "Inglês" parou por inatividade com 00:40:00 às 15:00 de 15/10
+    Quando a pessoa mexe no mouse às 15:12 de 15/10
+    Então o relógio de "Inglês" volta a contar a partir de 00:40:00, sem precisar de play
+
+  @must
+  Cenário: Relógio não volta sozinho se o dia virou durante a inatividade
+    Dado que "Inglês" parou por inatividade com 01:00:00 às 23:55 de 15/10
+    Quando a pessoa mexe no mouse às 00:10 de 16/10
+    Então o relógio de "Inglês" continua parado
+    E o relógio só começa a contar em 16/10 depois de um play
 
   @must
   Cenário: Relógio para na virada do dia
@@ -288,7 +300,8 @@ Funcionalidade: Dia de estudo com rotina opcional, cronômetro aberto e relato d
     Quando a pessoa abre o banco de horas
     Então as 2h40 de 15/10 aparecem como "a validar"
     E não entram no total de horas focadas de "Blender"
-    # SUPOSIÇÃO: o rótulo "a validar" é provisório; sem prazo para validar (confirmar, pergunta 4)
+    E continuam "a validar" sem prazo até a anotação de 15/10 ser feita
+    # SUPOSIÇÃO: o rótulo "a validar" é provisório
 
   @must
   Cenário: Anotar o dia no fim do dia valida o tempo
@@ -330,7 +343,7 @@ Funcionalidade: Dia de estudo com rotina opcional, cronômetro aberto e relato d
     Quando a pessoa manda desligar o PC
     Então aparece um lembrete de que o dia 15/10 está a validar
     E o desligamento segue sem esperar resposta
-    # SUPOSIÇÃO: depende do que o sistema operacional permite durante o desligamento (confirmar, pergunta 3)
+    # Só uma tentativa: depende do que o sistema operacional permite durante o desligamento. O lembrete garantido é o da próxima abertura.
 ```
 
 ## Decisões (respostas de 14/10)
@@ -340,12 +353,12 @@ Funcionalidade: Dia de estudo com rotina opcional, cronômetro aberto e relato d
 3. A anotação é pedida principalmente no fim do dia ou no começo do seguinte e valida o desempenho do dia.
 4. O lembrete do relato aparece ao desligar o PC ou no início do dia seguinte, sem impedir o uso.
 5. Voz fica de fora por enquanto.
+6. Depois da inatividade, o relógio volta sozinho, a menos que o dia tenha virado.
+7. O lembrete ao desligar é só uma tentativa; o garantido é o da próxima abertura.
+8. Um dia sem anotação fica "a validar", sem prazo.
 
 ## Perguntas em aberto
 
 1. **Sessão do dia sem play num objetivo:** o tempo de estudo capturado vai para qual matéria? (A) fica "estudo sem matéria" e a pessoa atribui na anotação do dia (recomendado); (B) a sessão do dia exige um objetivo com play.
-2. **Volta da inatividade:** ao mexer no teclado ou no mouse, o relógio volta a contar sozinho (recomendado) ou espera um novo play?
-3. **Lembrete ao desligar:** com o PC desligado nada aparece, e o desligamento dá pouco tempo ao app. Aceita que o lembrete garantido seja o da próxima abertura, deixando o "ao desligar" como tentativa (recomendado)?
-4. **Prazo para validar:** um dia sem anotação fica "a validar" para sempre (recomendado) ou perde a validação depois de algum prazo?
 
 Outras suposições marcadas nos cenários: rótulos "a fazer" e "a validar", só um objetivo rodando por vez, regra "Blender" criada pelo usuário, tutorial no YouTube reclassificado no resumo, complemento da manhã opcional.
