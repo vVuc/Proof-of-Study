@@ -1,4 +1,5 @@
-import type { Regra, Sessao, Tipo, Trecho } from '@/store/model/dados'
+import type { Dia, Regra, Sessao, Tipo, Trecho } from '@/store/model/dados'
+import { dataDaSessao, diaAnotado } from '@/features/dia/utils/dia'
 import { classificar, type Classe } from './classificacao'
 
 export interface TituloNoGrupo {
@@ -80,10 +81,14 @@ export function resumir(trechos: Trecho[], regras: Regra[], ajustes: Record<stri
   }
 }
 
-/** Uma sessão só entra no banco de horas com o registro do que foi estudado (texto ou imagem). */
+/** Anotação da própria sessão (versões até a 2). */
 export const temAnotacao = (s: Pick<Sessao, 'anotacao' | 'imagens'>) => s.anotacao.trim() !== '' || s.imagens.length > 0
 
-export const focoNoBanco = (s: Sessao) => (temAnotacao(s) ? s.focoMs : 0)
+/** A sessão está validada pela anotação do dia (ou pela própria, nas sessões antigas). */
+export const sessaoValidada = (s: Sessao, dias: Dia[]) => temAnotacao(s) || diaAnotado(dias.find((d) => d.data === dataDaSessao(s)))
+
+/** O foco só entra no banco de horas com o dia validado; até lá fica "a validar". */
+export const focoNoBanco = (s: Sessao, dias: Dia[]) => (sessaoValidada(s, dias) ? s.focoMs : 0)
 
 /** % do tempo em estudo, entre estudo e fora (o ignorado não entra na conta). */
 export const taxaDeFoco = (focoMs: number, foraMs: number) => (focoMs + foraMs > 0 ? focoMs / (focoMs + foraMs) : 0)

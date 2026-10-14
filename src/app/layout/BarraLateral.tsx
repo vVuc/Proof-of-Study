@@ -30,8 +30,8 @@ export function BarraLateral() {
             className={forma.forma === 'semicirculo' ? 'w-3.5' : 'size-3.5'}
           />
           <span className="flex-1">{rotulo}</span>
-          {to === '/sessao' && etapa === 'rodando' && (
-            <span aria-label="Sessão em andamento" className="size-2 border-[1.5px] border-contorno bg-vermelho" />
+          {to === '/' && etapa === 'rodando' && (
+            <span aria-label="Cronômetro rodando" className="size-2 border-[1.5px] border-contorno bg-vermelho" />
           )}
         </Link>
       ))}

@@ -1,36 +1,29 @@
 import { createContext, useContext } from 'react'
-import type { Sessao, SessaoAtual, Tipo, Trecho } from '@/store/model/dados'
+import type { SessaoAtual, Trecho } from '@/store/model/dados'
 import type { Retrato } from '../api/rastreio'
 
 /**
- * Em que ponto o pomodoro está:
- * - `pronto`: nenhuma sessão;
- * - `rodando` / `pausado`: o relógio andando (ou não);
- * - `resumo` → `nota`: acabou (pelo tempo ou pelo botão); primeiro o resumo, depois o que foi estudado.
+ * Em que ponto o cronômetro está:
+ * - `pronto`: nenhum objetivo rodando;
+ * - `rodando`: o relógio andando num objetivo (ou na sessão do dia, sem matéria);
+ * - `ocioso`: parado por inatividade; volta sozinho quando a pessoa mexe no PC, no mesmo dia.
  */
-export type Etapa = 'pronto' | 'rodando' | 'pausado' | 'resumo' | 'nota'
+export type Etapa = 'pronto' | 'rodando' | 'ocioso'
 
 export interface ContextoSessao {
   /** `null` até a primeira leitura do Rust. */
   etapa: Etapa | null
   retrato: Retrato | null
   sessao: SessaoAtual | null
-  /** Trechos da sessão em andamento ou encerrada. */
+  /** Trechos do cronômetro em andamento. */
   trechos: Trecho[]
-  /** O tempo acabou e o Rust ainda segura a sessão: dá para estender. */
-  podeEstender: boolean
-  iniciar: (materiaId: string, duracaoMin: number) => Promise<void>
+  /** Relógio de um objetivo hoje: o já registrado mais o que está rodando. `SEM_MATERIA` é a sessão do dia. */
+  tempoHoje: (materiaId: string) => number
+  /** Play: começa (ou continua) a contar no objetivo; se outro estiver rodando, ele é pausado antes. */
+  tocar: (materiaId: string) => Promise<void>
+  /** Pause: guarda o que foi registrado; o próximo play continua do mesmo tempo. */
   pausar: () => Promise<void>
-  retomar: () => Promise<void>
   alternarCaptura: () => Promise<void>
-  estender: (minutos: number) => Promise<void>
-  encerrar: () => Promise<void>
-  /** Reclassifica um grupo só nesta sessão. */
-  ajustar: (chave: string, tipo: Tipo) => void
-  irParaNota: () => void
-  voltarAoResumo: () => void
-  salvar: () => Promise<Sessao | null>
-  descartar: () => Promise<void>
 }
 
 export const SessaoContext = createContext<ContextoSessao | null>(null)

@@ -1,17 +1,20 @@
-//! O pomodoro e o registro das janelas. Fica no Rust porque o WebView (no Windows e no Linux) suspende os timers
-//! quando a janela do app está escondida: o relógio, o fim da sessão e o aviso de distração precisam
-//! continuar funcionando com o app na bandeja ou como widget.
+//! O cronômetro e o registro das janelas. Fica no Rust porque o WebView (no Windows e no Linux) suspende os timers
+//! quando a janela do app está escondida: o relógio, a parada por inatividade, a virada do dia e o aviso de
+//! distração precisam continuar funcionando com o app na bandeja ou como widget.
 //!
-//! A cada segundo, com a sessão rodando, a janela ativa é lida e somada ao trecho atual (ou abre um trecho novo).
-//! Pausado, parado ou concluído, nada é lido. Com a captura pausada, o relógio anda mas a janela não é lida.
+//! A cada segundo, com o cronômetro rodando, a janela ativa é lida e somada ao trecho atual (ou abre um trecho novo).
+//! O cronômetro não tem fim: para sozinho por inatividade (e volta sozinho quando a pessoa mexe no PC, no mesmo
+//! dia) e na virada do dia (`Concluido`, e a tela guarda o trecho do dia). Parado, ocioso ou concluído, nada é
+//! lido. Com a captura pausada, o relógio anda mas a janela não é lida.
 
 use std::sync::Mutex;
 
+use chrono::{Local, NaiveDate};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
 
 use crate::janela::{Janela, janela_ativa, ms_sem_uso};
-use crate::{mostrar_janela, notificar};
+use crate::notificar;
 
 /// Um intervalo contínuo na mesma janela.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -23,7 +26,7 @@ pub struct Trecho {
     pub titulo: String,
     pub processo: String,
     pub proprio: bool,
-    /// Sem mexer no teclado e no mouse por mais tempo que o limite, ou com o computador suspenso.
+    /// Ausência registrada por versões anteriores. Hoje o tempo sem uso é cortado e o relógio para.
     pub ausente: bool,
     /// Tempo com a captura pausada: o relógio andou, mas a janela não foi lida.
     #[serde(default)]
@@ -46,7 +49,7 @@ pub struct Regra {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Configuracao {
-    pub duracao_ms: i64,
+    /// Sem mexer no teclado e no mouse por esse tempo, o relógio para (e o tempo parado não conta).
     pub limite_ausencia_seg: i64,
     /// Segundos seguidos fora do estudo até o aviso; sem valor, não avisa.
     pub aviso_distracao_seg: Option<i64>,
@@ -60,11 +63,13 @@ pub struct Configuracao {
 pub enum Fase {
     Parado,
     Rodando,
-    Pausado,
+    /// Parado por inatividade; volta a `Rodando` sozinho quando a pessoa mexe no PC no mesmo dia.
+    Ocioso,
+    /// O dia virou: os trechos vão até a meia-noite e esperam a tela guardar.
     Concluido,
 }
 
-/// Um intervalo maior que isso entre duas leituras é o computador suspenso ou travado.
+/// Um intervalo maior que isso entre duas leituras é o computador suspenso ou travado: não conta.
 const SALTO_MS: i64 = 10_000;
 
 struct Estado {
@@ -76,6 +81,8 @@ struct Estado {
     trechos: Vec<Trecho>,
     fora_desde: Option<i64>,
     avisado: bool,
+    /// Dia (no fuso local) em que o cronômetro começou: o registro não passa da meia-noite dele.
+    dia: Option<NaiveDate>,
 }
 
 pub struct Rastreador(Mutex<Estado>);
@@ -90,6 +97,7 @@ impl Rastreador {
             trechos: Vec::new(),
             fora_desde: None,
             avisado: false,
+            dia: None,
         }))
     }
 
@@ -104,7 +112,6 @@ pub struct Retrato {
     fase: Fase,
     captura: bool,
     decorrido_ms: i64,
-    duracao_ms: i64,
     /// Janela ativa agora, lida na hora (é o que a tela de transparência mostra). Vazia sem captura.
     atual: Janela,
     ms_sem_uso: i64,
@@ -113,6 +120,18 @@ pub struct Retrato {
 
 fn agora_ms() -> i64 {
     chrono::Utc::now().timestamp_millis()
+}
+
+fn hoje() -> NaiveDate {
+    Local::now().date_naive()
+}
+
+/// Meia-noite (no fuso local) que encerra o dia, em milissegundos.
+fn fim_do_dia_ms(dia: NaiveDate) -> i64 {
+    dia.succ_opt()
+        .and_then(|amanha| amanha.and_hms_opt(0, 0, 0))
+        .and_then(|meia_noite| meia_noite.and_local_timezone(Local).earliest())
+        .map_or(i64::MAX, |m| m.timestamp_millis())
 }
 
 fn decorrido(e: &Estado, agora: i64) -> i64 {
@@ -135,27 +154,11 @@ fn acrescentar(trechos: &mut Vec<Trecho>, novo: Trecho) {
     trechos.push(novo);
 }
 
-/// Ao perceber a ausência, o tempo desde o último uso também era ausência: marca os trechos a partir de `desde`.
-fn marcar_ausencia(trechos: &mut Vec<Trecho>, desde: i64) {
-    let mut i = trechos.len();
-    while i > 0 {
-        i -= 1;
-        if trechos[i].fim <= desde {
-            break;
-        }
-        if trechos[i].ausente || trechos[i].sem_captura {
-            continue;
-        }
-        if trechos[i].inicio >= desde {
-            trechos[i].ausente = true;
-        } else {
-            let mut depois = trechos[i].clone();
-            depois.inicio = desde;
-            depois.ausente = true;
-            trechos[i].fim = desde;
-            trechos.insert(i + 1, depois);
-            break;
-        }
+/// Ao perceber a inatividade, o tempo desde o último uso não conta: corta os trechos a partir de `desde`.
+fn cortar_desde(trechos: &mut Vec<Trecho>, desde: i64) {
+    trechos.retain(|t| t.inicio < desde);
+    if let Some(ultimo) = trechos.last_mut() {
+        ultimo.fim = ultimo.fim.min(desde);
     }
 }
 
@@ -178,37 +181,16 @@ fn registrar(e: &mut Estado, agora: i64) {
         };
         return acrescentar(&mut e.trechos, trecho);
     }
+    // Computador suspenso ou travado: o intervalo não conta, só o último segundo.
+    let inicio = if agora - inicio > SALTO_MS { agora - 1000 } else { inicio };
     let janela = janela_ativa();
-    let sem_uso = ms_sem_uso();
-    if agora - inicio > SALTO_MS {
-        let suspenso = Trecho {
-            inicio,
-            fim: agora - 1000,
-            titulo: "Computador suspenso ou travado".into(),
-            processo: String::new(),
-            proprio: false,
-            ausente: true,
-            sem_captura: false,
-        };
-        acrescentar(&mut e.trechos, suspenso);
-        return registrar_pedaco(e, agora - 1000, agora, &janela, sem_uso);
-    }
-    registrar_pedaco(e, inicio, agora, &janela, sem_uso);
-}
-
-fn registrar_pedaco(e: &mut Estado, inicio: i64, fim: i64, janela: &Janela, sem_uso: i64) {
-    let limite = e.config.as_ref().map_or(i64::MAX, |c| c.limite_ausencia_seg * 1000);
-    let ausente = sem_uso >= limite;
-    if ausente {
-        marcar_ausencia(&mut e.trechos, fim - sem_uso);
-    }
     let trecho = Trecho {
         inicio,
-        fim,
-        titulo: janela.titulo.clone(),
-        processo: janela.processo.clone(),
+        fim: agora,
+        titulo: janela.titulo,
+        processo: janela.processo,
         proprio: janela.proprio,
-        ausente,
+        ausente: false,
         sem_captura: false,
     };
     acrescentar(&mut e.trechos, trecho);
@@ -249,22 +231,44 @@ fn formatar_minutos(ms: i64) -> String {
 pub fn tick(app: &AppHandle) {
     let rastreador = app.state::<Rastreador>();
     let mut avisos: Vec<(String, String)> = Vec::new();
-    let mut concluiu = false;
     {
         let Ok(mut e) = rastreador.0.lock() else { return };
-        if e.fase != Fase::Rodando {
+        if e.fase != Fase::Rodando && e.fase != Fase::Ocioso {
             return;
         }
-        let agora = agora_ms();
-        registrar(&mut e, agora);
-
         let Some(config) = e.config.clone() else { return };
-        let distraido = if e.captura && ms_sem_uso() < config.limite_ausencia_seg * 1000 {
-            distracao(&config, &janela_ativa())
-        } else {
-            None
-        };
+        let limite = config.limite_ausencia_seg * 1000;
+        let agora = agora_ms();
 
+        // Virada do dia: o registro vai até a meia-noite e o cronômetro para.
+        if let Some(dia) = e.dia.filter(|d| *d != hoje()) {
+            if e.fase == Fase::Rodando {
+                let meia_noite = fim_do_dia_ms(dia).min(agora);
+                registrar(&mut e, meia_noite);
+            }
+            e.fase = Fase::Concluido;
+            return;
+        }
+
+        let sem_uso = ms_sem_uso();
+        if e.fase == Fase::Ocioso {
+            if sem_uso < limite {
+                e.fase = Fase::Rodando;
+                e.ultimo = agora;
+            }
+            return;
+        }
+
+        registrar(&mut e, agora);
+        if sem_uso >= limite {
+            cortar_desde(&mut e.trechos, agora - sem_uso);
+            e.fase = Fase::Ocioso;
+            e.fora_desde = None;
+            e.avisado = false;
+            return;
+        }
+
+        let distraido = if e.captura { distracao(&config, &janela_ativa()) } else { None };
         match (config.aviso_distracao_seg, distraido) {
             (Some(limite), Some(rotulo)) => {
                 let desde = *e.fora_desde.get_or_insert(agora);
@@ -285,21 +289,9 @@ pub fn tick(app: &AppHandle) {
                 e.avisado = false;
             }
         }
-
-        if decorrido(&e, agora) >= config.duracao_ms {
-            e.fase = Fase::Concluido;
-            concluiu = true;
-            avisos.push((
-                "Pomodoro concluído".into(),
-                format!("Fim da sessão de {}. Registre o que estudou para o tempo entrar no banco de horas.", config.materia),
-            ));
-        }
     }
     for (titulo, corpo) in avisos {
         notificar(app, &titulo, &corpo);
-    }
-    if concluiu {
-        mostrar_janela(app);
     }
 }
 
@@ -313,28 +305,7 @@ pub fn rastreio_iniciar(rastreador: State<Rastreador>, config: Configuracao) {
         e.trechos.clear();
         e.fora_desde = None;
         e.avisado = false;
-    }
-}
-
-#[tauri::command]
-pub fn rastreio_pausar(rastreador: State<Rastreador>) {
-    if let Ok(mut e) = rastreador.0.lock() {
-        if e.fase == Fase::Rodando {
-            registrar(&mut e, agora_ms());
-            e.fase = Fase::Pausado;
-            e.fora_desde = None;
-            e.avisado = false;
-        }
-    }
-}
-
-#[tauri::command]
-pub fn rastreio_retomar(rastreador: State<Rastreador>) {
-    if let Ok(mut e) = rastreador.0.lock() {
-        if e.fase == Fase::Pausado {
-            e.fase = Fase::Rodando;
-            e.ultimo = agora_ms();
-        }
+        e.dia = Some(hoje());
     }
 }
 
@@ -351,23 +322,7 @@ pub fn rastreio_captura(rastreador: State<Rastreador>, ligada: bool) {
     }
 }
 
-/// Mais tempo depois de concluir (ou durante a sessão).
-#[tauri::command]
-pub fn rastreio_estender(rastreador: State<Rastreador>, ms: i64) {
-    if let Ok(mut e) = rastreador.0.lock() {
-        let agora = agora_ms();
-        let decorrido = decorrido(&e, agora);
-        if let Some(config) = e.config.as_mut() {
-            config.duracao_ms = config.duracao_ms.max(decorrido) + ms;
-        }
-        if e.fase == Fase::Concluido {
-            e.fase = Fase::Rodando;
-            e.ultimo = agora;
-        }
-    }
-}
-
-/// Encerra a sessão e devolve tudo o que foi registrado.
+/// Para o cronômetro (pause, troca de objetivo ou virada do dia) e devolve tudo o que foi registrado.
 #[tauri::command]
 pub fn rastreio_parar(rastreador: State<Rastreador>) -> Vec<Trecho> {
     let Ok(mut e) = rastreador.0.lock() else { return Vec::new() };
@@ -377,6 +332,7 @@ pub fn rastreio_parar(rastreador: State<Rastreador>) -> Vec<Trecho> {
     e.fase = Fase::Parado;
     e.config = None;
     e.captura = true;
+    e.dia = None;
     std::mem::take(&mut e.trechos)
 }
 
@@ -387,20 +343,18 @@ pub fn rastreio_estado(rastreador: State<Rastreador>) -> Retrato {
             fase: Fase::Parado,
             captura: true,
             decorrido_ms: 0,
-            duracao_ms: 0,
             atual: Janela::default(),
             ms_sem_uso: 0,
             trechos: Vec::new(),
         };
     };
-    // Fora do pomodoro rodando, ou com a captura pausada, nada é lido: nem para mostrar na tela.
+    // Fora do cronômetro rodando, ou com a captura pausada, nada é lido: nem para mostrar na tela.
     let lendo = e.fase == Fase::Rodando && e.captura;
     let (atual, sem_uso) = if lendo { (janela_ativa(), ms_sem_uso()) } else { (Janela::default(), 0) };
     Retrato {
         fase: e.fase,
         captura: e.captura,
         decorrido_ms: decorrido(&e, agora_ms()),
-        duracao_ms: e.config.as_ref().map_or(0, |c| c.duracao_ms),
         atual,
         ms_sem_uso: sem_uso,
         trechos: e.trechos.clone(),
@@ -441,13 +395,20 @@ mod testes {
     }
 
     #[test]
-    fn ausencia_divide_o_trecho_no_ultimo_uso() {
-        let mut trechos = vec![trecho(0, 10_000, "A"), trecho(10_000, 20_000, "B")];
-        marcar_ausencia(&mut trechos, 15_000);
-        assert_eq!(trechos.len(), 3);
-        assert!(!trechos[0].ausente);
-        assert_eq!((trechos[1].inicio, trechos[1].fim, trechos[1].ausente), (10_000, 15_000, false));
-        assert_eq!((trechos[2].inicio, trechos[2].fim, trechos[2].ausente), (15_000, 20_000, true));
+    fn inatividade_corta_o_tempo_desde_o_ultimo_uso() {
+        let mut trechos = vec![trecho(0, 10_000, "A"), trecho(10_000, 20_000, "B"), trecho(20_000, 30_000, "C")];
+        cortar_desde(&mut trechos, 15_000);
+        assert_eq!(trechos.len(), 2);
+        assert_eq!((trechos[0].inicio, trechos[0].fim), (0, 10_000));
+        assert_eq!((trechos[1].inicio, trechos[1].fim), (10_000, 15_000));
+    }
+
+    #[test]
+    fn dia_termina_na_meia_noite_local() {
+        let dia = NaiveDate::from_ymd_opt(2026, 10, 15).unwrap();
+        let fim = chrono::DateTime::from_timestamp_millis(fim_do_dia_ms(dia)).unwrap().with_timezone(&Local);
+        assert_eq!(fim.date_naive(), NaiveDate::from_ymd_opt(2026, 10, 16).unwrap());
+        assert_eq!(fim.time(), chrono::NaiveTime::MIN);
     }
 
     #[test]
@@ -462,7 +423,6 @@ mod testes {
     #[test]
     fn janela_sem_regra_conta_como_fora_e_ignorar_nao() {
         let config = Configuracao {
-            duracao_ms: 0,
             limite_ausencia_seg: 300,
             aviso_distracao_seg: Some(60),
             regras: vec![regra("Spotify", "spotify", "app", "ignorar")],

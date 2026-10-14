@@ -1,4 +1,4 @@
-import type { BlocoRotina, Dados, Materia, Meta, Preferencias, Regra, Sessao, SessaoAtual } from '../model/dados'
+import type { BlocoRotina, Dados, Dia, Materia, Meta, Preferencias, Regra, Sessao, SessaoAtual } from '../model/dados'
 import { regrasPadrao } from '../model/dados'
 
 export type Acao =
@@ -11,6 +11,7 @@ export type Acao =
   | { tipo: 'bloco/excluir'; id: string }
   | { tipo: 'sessao/salvar'; sessao: Sessao }
   | { tipo: 'sessao/excluir'; id: string }
+  | { tipo: 'dia/salvar'; dia: Dia }
   | { tipo: 'regra/salvar'; regra: Regra }
   | { tipo: 'regra/excluir'; id: string }
   | { tipo: 'regras/restaurar' }
@@ -53,6 +54,13 @@ export function dadosReducer(estado: Dados, acao: Acao): Dados {
       return { ...estado, sessoes: salvarItem(estado.sessoes, acao.sessao) }
     case 'sessao/excluir':
       return { ...estado, sessoes: estado.sessoes.filter((s) => s.id !== acao.id) }
+    case 'dia/salvar':
+      return {
+        ...estado,
+        dias: estado.dias.some((d) => d.data === acao.dia.data)
+          ? estado.dias.map((d) => (d.data === acao.dia.data ? acao.dia : d))
+          : [...estado.dias, acao.dia],
+      }
     case 'regra/salvar':
       return { ...estado, regras: salvarItem(estado.regras, acao.regra) }
     case 'regra/excluir':

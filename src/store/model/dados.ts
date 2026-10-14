@@ -1,7 +1,7 @@
 import type { DataISO } from '@/shared/lib/datas'
 
 /** Versão do formato salvo em `dados.json`. Ao mudar o formato, suba a versão e converta em `atualizarDados`. */
-export const VERSAO_DADOS = 2
+export const VERSAO_DADOS = 3
 
 export type Categoria = 'estudo' | 'trabalho' | 'jogo' | 'treino' | 'terapia' | 'sono'
 
@@ -44,6 +44,9 @@ export interface BlocoRotina {
   avisar: boolean
 }
 
+/** Categorias que ocupam o dia e tiram tempo do estudo (trabalho, academia…). Estudo não ocupa: é o que se planeja. */
+export const categoriaOcupa = (c: Categoria) => c !== 'estudo'
+
 /** Intervalo contínuo na mesma janela, registrado pelo Rust (`src-tauri/src/rastreador.rs`). */
 export interface Trecho {
   /** Milissegundos desde 1970. */
@@ -57,21 +60,45 @@ export interface Trecho {
   semCaptura?: boolean
 }
 
+/** `materiaId` da sessão do dia ligada sem matéria: a pessoa atribui a matéria na anotação do dia. */
+export const SEM_MATERIA = ''
+
+/** Um trecho do cronômetro: de um play até o pause, a troca de objetivo ou a virada do dia. */
 export interface Sessao {
   id: string
+  /** `SEM_MATERIA` quando foi a sessão do dia sem objetivo. */
   materiaId: string
   inicio: number
   fim: number
+  /** Duração do pomodoro nas versões até a 2; 0 no cronômetro aberto. */
   duracaoPlanejadaMin: number
   trechos: Trecho[]
   /** Grupos que a pessoa reclassificou no fim da sessão (ex.: YouTube que era aula). */
   ajustes: Record<string, Tipo>
   focoMs: number
   foraMs: number
-  /** O que foi estudado. Sem anotação nem imagem, o tempo não entra no banco de horas. */
+  /** Anotação por sessão das versões até a 2. Hoje quem valida é a anotação do dia (`Dia`). */
   anotacao: string
   /** Nomes dos arquivos na pasta de imagens do app. */
   imagens: string[]
+}
+
+/** O dia de estudo: o plano da manhã, os objetivos e a anotação que valida o tempo do dia no banco de horas. */
+export interface Dia {
+  data: DataISO
+  /** O plano já foi visto (confirmado ou pulado): não aparece de novo no mesmo dia. */
+  planoFeito: boolean
+  plano: string
+  /** Matérias escolhidas no plano. */
+  objetivos: string[]
+  /** Matérias estudadas fora do plano: redirecionamento, não fracasso. */
+  extras: string[]
+  /** O que foi estudado e como foi o dia. Com ela (ou imagem), o tempo do dia entra no banco. */
+  anotacao: string
+  imagens: string[]
+  /** Acréscimo da manhã seguinte (memória ativa); não muda a anotação da noite. */
+  complemento: string
+  anotadoEm?: number
 }
 
 /** Regra que classifica janelas: o nome do app ou uma palavra no título. As de título valem antes. */
@@ -84,26 +111,23 @@ export interface Regra {
 }
 
 export interface Preferencias {
+  /** Duração do pomodoro nas versões até a 2; o cronômetro aberto não usa. */
   duracaoMin: number
-  /** Sem mexer no teclado e no mouse por esse tempo, a sessão conta como ausência. */
+  /** Sem mexer no teclado e no mouse por esse tempo, o relógio para (e volta ao mexer, no mesmo dia). */
   limiteAusenciaMin: number
   avisoDistracao: boolean
   avisoDistracaoSeg: number
 }
 
-/** Pomodoro em andamento (ou encerrado e ainda sem anotação). Os trechos são uma cópia de segurança. */
+/** Cronômetro em andamento. Os trechos são uma cópia de segurança, para não perder o tempo se o app fechar. */
 export interface SessaoAtual {
   id: string
   materiaId: string
   inicio: number
-  duracaoMin: number
   trechos: Trecho[]
-  /** Imagens já coladas na anotação, para apagar se a sessão for descartada. */
-  imagens: string[]
-  anotacao: string
-  /** Depois de encerrar: o resumo ou a anotação. */
-  passo?: 'resumo' | 'nota'
-  /** Reclassificações feitas no resumo. */
+  /** Campos do pomodoro das versões até a 2, guardados ao converter. */
+  imagens?: string[]
+  anotacao?: string
   ajustes?: Record<string, Tipo>
 }
 
@@ -114,6 +138,7 @@ export interface Dados {
   sessoes: Sessao[]
   regras: Regra[]
   preferencias: Preferencias
+  dias: Dia[]
   sessaoAtual: SessaoAtual | null
 }
 
@@ -175,6 +200,7 @@ export function dadosIniciais(): Dados {
     sessoes: [],
     regras: regrasPadrao(),
     preferencias: PREFERENCIAS_PADRAO,
+    dias: [],
     sessaoAtual: null,
   }
 }
@@ -196,6 +222,7 @@ export function atualizarDados(salvo: Partial<Dados> | undefined, versao = VERSA
     // As regras da v1 eram só de distração por título; as novas trazem também os apps de estudo.
     regras: v1 || !salvo.regras ? regrasPadrao() : salvo.regras,
     preferencias: { ...PREFERENCIAS_PADRAO, ...salvo.preferencias },
+    dias: salvo.dias ?? [],
     sessaoAtual: salvo.sessaoAtual ?? null,
   }
 }

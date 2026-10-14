@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { CabecalhoCard } from '@/shared/components/CabecalhoCard'
 import { formatarDuracao } from '@/shared/lib/datas'
 import { cn } from '@/shared/lib/utils'
-import type { Sessao } from '@/store/model/dados'
+import { Link } from '@tanstack/react-router'
+import type { Dia, Sessao } from '@/store/model/dados'
+import { dataDaSessao } from '@/features/dia/utils/dia'
 import { rotuloDaSessao } from '@/features/sessao/utils/rotulos'
-import { temAnotacao } from '@/features/sessao/utils/resumo'
+import { sessaoValidada, temAnotacao } from '@/features/sessao/utils/resumo'
 import { CARTAO } from '@/shared/lib/estilos'
 import { DialogSessao } from './DialogSessao'
 
-/** As sessões da semana com a evidência de cada uma (anotação e imagens) e a barra de foco e fora. */
-export function CardSessoes({ sessoes }: { sessoes: Sessao[] }) {
+/** As sessões da semana com a evidência (a anotação do dia, ou a da sessão nas antigas) e a barra de foco e fora. */
+export function CardSessoes({ sessoes, dias }: { sessoes: Sessao[]; dias: Dia[] }) {
   const [aberta, setAberta] = useState<Sessao | null>(null)
 
   return (
@@ -33,8 +35,20 @@ export function CardSessoes({ sessoes }: { sessoes: Sessao[] }) {
             <span className="text-[0.8125rem] leading-normal text-pretty">
               {temAnotacao(s) ? (
                 s.anotacao || <span className="text-muted-foreground">Só imagens.</span>
+              ) : sessaoValidada(s, dias) ? (
+                dias.find((d) => d.data === dataDaSessao(s))?.anotacao || <span className="text-muted-foreground">Dia validado com imagens.</span>
               ) : (
-                <span className="font-semibold text-fora">Sem anotação: fora do banco. Clique para anotar.</span>
+                <span className="font-semibold">
+                  A validar.{' '}
+                  <Link
+                    to="/dia"
+                    search={{ data: dataDaSessao(s) }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="underline underline-offset-4"
+                  >
+                    Anotar o dia
+                  </Link>
+                </span>
               )}
               {s.imagens.length > 0 && (
                 <span className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">

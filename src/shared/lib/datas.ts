@@ -93,3 +93,13 @@ export function formatarHoraCurta(minutos: number): string {
   const m = minutos % 60
   return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`
 }
+
+/** Cronômetro aberto, sempre com horas: "00:40:00", "12:05:09". */
+export function formatarCronometro(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const doisDigitos = (n: number) => String(n).padStart(2, '0')
+  return `${doisDigitos(Math.floor(total / 3600))}:${doisDigitos(Math.floor((total % 3600) / 60))}:${doisDigitos(total % 60)}`
+}
+
+/** "15/10" */
+export const formatarDiaCurto = (data: DataISO) => format(deISO(data), 'dd/MM')

@@ -36,7 +36,7 @@
     "targets": ["nsis", "deb", "rpm", "appimage"],
     "publisher": "Mizerski",
     "category": "Education",
-    "shortDescription": "Banco de horas de estudo com pomodoro que registra o foco",
+    "shortDescription": "Banco de horas de estudo com cronômetro que registra o foco",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

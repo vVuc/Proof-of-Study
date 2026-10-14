@@ -1,9 +1,10 @@
 import { invoke } from '@tauri-apps/api/core'
 import type { Trecho } from '@/store/model/dados'
 
-/** Comandos do pomodoro e do registro de janelas (`src-tauri/src/rastreador.rs` e `lembretes.rs`). */
+/** Comandos do cronômetro e do registro de janelas (`src-tauri/src/rastreador.rs` e `lembretes.rs`). */
 
-export type Fase = 'parado' | 'rodando' | 'pausado' | 'concluido'
+/** `ocioso`: parado por inatividade, volta sozinho; `concluido`: o dia virou e o trecho espera ser guardado. */
+export type Fase = 'parado' | 'rodando' | 'ocioso' | 'concluido'
 
 export interface Janela {
   titulo: string
@@ -16,15 +17,13 @@ export interface Retrato {
   /** Leitura da janela ligada (a pessoa pode pausar só a captura). */
   captura: boolean
   decorridoMs: number
-  duracaoMs: number
-  /** Janela ativa agora; vazia fora do pomodoro rodando ou sem captura. */
+  /** Janela ativa agora; vazia fora do cronômetro rodando ou sem captura. */
   atual: Janela
   msSemUso: number
   trechos: Trecho[]
 }
 
 export interface ConfiguracaoRastreio {
-  duracaoMs: number
   limiteAusenciaSeg: number
   avisoDistracaoSeg: number | null
   regras: { rotulo: string; termos: string[]; campo: 'app' | 'titulo'; tipo: 'estudo' | 'fora' | 'ignorar' }[]
@@ -32,10 +31,7 @@ export interface ConfiguracaoRastreio {
 }
 
 export const iniciarRastreio = (config: ConfiguracaoRastreio) => invoke<void>('rastreio_iniciar', { config })
-export const pausarRastreio = () => invoke<void>('rastreio_pausar')
-export const retomarRastreio = () => invoke<void>('rastreio_retomar')
 export const definirCaptura = (ligada: boolean) => invoke<void>('rastreio_captura', { ligada })
-export const estenderRastreio = (ms: number) => invoke<void>('rastreio_estender', { ms })
 export const pararRastreio = () => invoke<Trecho[]>('rastreio_parar')
 export const lerRastreio = () => invoke<Retrato>('rastreio_estado')
 

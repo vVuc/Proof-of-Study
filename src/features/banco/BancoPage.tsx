@@ -133,10 +133,10 @@ export function BancoPage() {
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
         <CardHorasFocadas saldo={saldo} taxa={sessoes.length ? taxaDeFoco(foco, fora) : null} />
-        <CardDiasDeEstudo semana={semana} materiaId={materia.id} blocos={dados.blocos} sessoes={sessoes} />
+        <CardDiasDeEstudo semana={semana} materiaId={materia.id} blocos={dados.blocos} sessoes={sessoes} diasAnotados={dados.dias} />
       </div>
 
-      <CardSessoes sessoes={sessoes} />
+      <CardSessoes sessoes={sessoes} dias={dados.dias} />
 
       <DialogMateria materia={editandoMateria} onClose={() => setEditandoMateria(null)} />
       <DialogMeta alvo={editandoMeta ? { materia, semana } : null} onClose={() => setEditandoMeta(false)} />

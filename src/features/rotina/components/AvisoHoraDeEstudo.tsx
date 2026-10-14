@@ -15,11 +15,11 @@ const ADIAR_MS = 10 * 60_000
 
 /**
  * "Hora do estudo": aparece dentro do app enquanto um bloco de estudo da rotina está acontecendo e não há
- * pomodoro. Fecha por hoje no ✕ ou volta em 10 min. (Com o app escondido, quem avisa é a notificação do sistema.)
+ * cronômetro rodando. Fecha por hoje no ✕ ou volta em 10 min. (Com o app escondido, quem avisa é a notificação do sistema.)
  */
 export function AvisoHoraDeEstudo() {
   const { dados } = useDados()
-  const { etapa, iniciar } = useSessao()
+  const { etapa, tocar } = useSessao()
   const navigate = useNavigate()
   const agora = useAgora(15_000)
   const [fechados, setFechados] = useState<Record<string, number>>({})
@@ -37,8 +37,8 @@ export function AvisoHoraDeEstudo() {
   async function comecar() {
     const materiaId = materia?.id ?? dados.materias.find((m) => !m.arquivada)?.id
     if (!materiaId) return void navigate({ to: '/banco' })
-    await iniciar(materiaId, dados.preferencias.duracaoMin)
-    void navigate({ to: '/sessao' })
+    await tocar(materiaId)
+    void navigate({ to: '/' })
   }
 
   return (
@@ -71,7 +71,7 @@ export function AvisoHoraDeEstudo() {
         </p>
         <div className="flex gap-2.5 pt-0.5">
           <Button className={cn(BOTAO, 'h-9 px-3 text-[0.6875rem]')} onClick={() => void comecar()}>
-            Iniciar pomodoro
+            Play
           </Button>
           <Button variant="outline" className={cn(BOTAO, 'h-9 px-3 text-[0.6875rem]')} onClick={() => fechar(Date.now() + ADIAR_MS)}>
             Em 10 min

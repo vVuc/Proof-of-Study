@@ -50,7 +50,7 @@ fn criar_bandeja(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Um segundo por volta: lê a janela ativa (se houver sessão) e confere os lembretes.
+/// Um segundo por volta: lê a janela ativa (com o cronômetro rodando) e confere os lembretes.
 fn iniciar_relogio(app: AppHandle) {
     std::thread::spawn(move || {
         loop {
@@ -73,10 +73,7 @@ pub fn run() {
         .manage(lembretes::Lembretes::default())
         .invoke_handler(tauri::generate_handler![
             rastreador::rastreio_iniciar,
-            rastreador::rastreio_pausar,
-            rastreador::rastreio_retomar,
             rastreador::rastreio_captura,
-            rastreador::rastreio_estender,
             rastreador::rastreio_parar,
             rastreador::rastreio_estado,
             lembretes::lembretes_definir,
@@ -86,7 +83,7 @@ pub fn run() {
             imagens::imagem_salvar,
             imagens::imagem_excluir,
         ])
-        // Fechar a janela só a esconde na bandeja: o pomodoro e os lembretes continuam.
+        // Fechar a janela só a esconde na bandeja: o cronômetro e os lembretes continuam.
         .on_window_event(|janela, evento| {
             if let WindowEvent::CloseRequested { api, .. } = evento {
                 api.prevent_close();

@@ -10,7 +10,7 @@ import { COR_TIPO, LinhaGrupo } from './partes'
 export function useStatusCaptura() {
   const { etapa, retrato } = useSessao()
   const { capturando, atual } = useResumoDaSessao()
-  const rotulo = capturando ? 'Capturando' : etapa === 'rodando' && retrato && !retrato.captura ? 'Captura pausada' : 'Captura desligada'
+  const rotulo = capturando ? 'Capturando' : etapa !== 'pronto' && retrato && !retrato.captura ? 'Captura pausada' : 'Captura desligada'
   const cor = capturando && atual?.tipo ? COR_TIPO[atual.tipo].bloco : 'bg-muted'
   return { rotulo, cor }
 }
@@ -44,7 +44,7 @@ export function PopoverCaptura() {
 export function DetalheCaptura({ compacto }: { compacto?: boolean }) {
   const { etapa, retrato, alternarCaptura } = useSessao()
   const { resumo, atual } = useResumoDaSessao()
-  const ativa = etapa === 'rodando' || etapa === 'pausado'
+  const ativa = etapa === 'rodando' || etapa === 'ocioso'
 
   return (
     <div className={cn('flex flex-col gap-3', compacto ? 'pt-2.5' : 'p-4')}>
@@ -64,7 +64,7 @@ export function DetalheCaptura({ compacto }: { compacto?: boolean }) {
       )}
       <div className="flex flex-col gap-0.5">
         <span className={cn('leading-snug font-medium [overflow-wrap:anywhere]', compacto ? 'text-xs' : 'text-[0.8125rem]')}>
-          {atual?.titulo ?? (etapa === 'pronto' ? 'Aguardando início do pomodoro' : 'Captura pausada')}
+          {atual?.titulo ?? (etapa === 'pronto' ? 'Aguardando o play' : 'Captura pausada')}
         </span>
         <span className={cn('text-muted-foreground', compacto ? 'text-[0.6875rem]' : 'text-xs')}>
           {atual?.detalhe ?? (etapa === 'pronto' ? 'Nenhuma janela registrada' : 'Tempo não registrado')}
@@ -98,7 +98,7 @@ export function DetalheCaptura({ compacto }: { compacto?: boolean }) {
             <br />
             URL das páginas
           </div>
-          <div className="col-span-2 text-muted-foreground">Dados ficam só neste PC. A captura só roda com o pomodoro ativo.</div>
+          <div className="col-span-2 text-muted-foreground">Dados ficam só neste PC. A captura só roda com o cronômetro rodando.</div>
         </div>
       )}
     </div>

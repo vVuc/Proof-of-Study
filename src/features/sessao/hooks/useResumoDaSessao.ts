@@ -6,7 +6,7 @@ import { useSessao } from '../context/sessao-context'
 import { classificar, nomeDoPrograma, ROTULO_TIPO } from '../utils/classificacao'
 import { resumir } from '../utils/resumo'
 
-/** O que as telas da sessão mostram: o resumo até agora, a matéria, a meta e como a janela ativa está contando. */
+/** O trecho do cronômetro em andamento: o resumo até agora, a matéria, a meta e como a janela ativa está contando. */
 export function useResumoDaSessao() {
   const { dados } = useDados()
   const { trechos, sessao, retrato, etapa } = useSessao()

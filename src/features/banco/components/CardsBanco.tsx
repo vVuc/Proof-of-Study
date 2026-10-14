@@ -5,7 +5,7 @@ import { DIAS_SEMANA, deISO, formatarDuracao, formatarHM, formatarMeta, paraISO,
 import { CARTAO, ROTULO, VALOR_DESTAQUE } from '@/shared/lib/estilos'
 import { formatarPercentual } from '@/shared/lib/percentual'
 import { cn } from '@/shared/lib/utils'
-import type { BlocoRotina, Sessao } from '@/store/model/dados'
+import type { BlocoRotina, Dia, Sessao } from '@/store/model/dados'
 import { estudoNoDia } from '@/features/rotina/utils/rotina'
 import { focoNoBanco } from '@/features/sessao/utils/resumo'
 import type { SaldoMateria } from '../utils/banco'
@@ -24,8 +24,8 @@ export function CardHorasFocadas({ saldo, taxa }: { saldo: SaldoMateria; taxa: n
         acoes={
           <Ajuda titulo="O que entra no banco">
             <p>
-              Só entra no banco o tempo em janelas marcadas como <b>estudo</b>, e só de sessões com anotação do que foi
-              estudado.
+              Só entra no banco o tempo em janelas marcadas como <b>estudo</b>, e só dos dias com a anotação do que foi
+              estudado (feita no fim do dia ou na manhã seguinte).
             </p>
             <p>Tempo fora do estudo e janelas ignoradas ficam registrados na sessão, mas não somam.</p>
           </Ajuda>
@@ -57,8 +57,8 @@ export function CardHorasFocadas({ saldo, taxa }: { saldo: SaldoMateria; taxa: n
         </div>
         {saldo.pendenteMs > 0 && (
           <p className="text-xs text-muted-foreground">
-            <b className="text-foreground">{formatarDuracao(saldo.pendenteMs)}</b> focados em sessões sem anotação ainda não
-            entraram.
+            <b className="text-foreground">{formatarDuracao(saldo.pendenteMs)}</b> focados estão a validar: entram quando você anotar o
+            dia.
           </p>
         )}
       </div>
@@ -81,17 +81,19 @@ export function CardDiasDeEstudo({
   materiaId,
   blocos,
   sessoes,
+  diasAnotados,
 }: {
   semana: DataISO
   materiaId: string
   blocos: BlocoRotina[]
   sessoes: Sessao[]
+  diasAnotados: Dia[]
 }) {
   const segunda = deISO(semana)
   const dias = DIAS_SEMANA.map(({ dia, curto }, i) => {
     const data = paraISO(addDays(segunda, i))
     const planejado = estudoNoDia(blocos, materiaId, dia)
-    const focado = sessoes.filter((s) => paraISO(new Date(s.inicio)) === data).reduce((soma, s) => soma + focoNoBanco(s), 0) / 60_000
+    const focado = sessoes.filter((s) => paraISO(new Date(s.inicio)) === data).reduce((soma, s) => soma + focoNoBanco(s, diasAnotados), 0) / 60_000
     return { curto, data, planejado, focado }
   })
   const escala = Math.max(60, ...dias.map((d) => Math.max(d.planejado, d.focado)))

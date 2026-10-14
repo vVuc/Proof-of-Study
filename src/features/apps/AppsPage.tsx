@@ -158,17 +158,9 @@ function CardPreferencias() {
     <div className={CARTAO}>
       <CabecalhoCard titulo="Sessão e avisos" faixa="bg-amarelo" forma={{ forma: 'quadrado', cor: 'tinta' }} />
       <div className="flex flex-col gap-4 p-4">
-        <Campo rotulo="Pomodoro">
+        <Campo rotulo="O relógio para sem mexer no PC por">
           <ControleSegmentado
-            rotulo="Duração do pomodoro"
-            valor={String(p.duracaoMin)}
-            onChange={(v) => mudar({ duracaoMin: Number(v) })}
-            opcoes={[25, 50].map((m) => ({ valor: String(m), rotulo: `${m} min` }))}
-          />
-        </Campo>
-        <Campo rotulo="Conta como ausente sem mexer no PC por">
-          <ControleSegmentado
-            rotulo="Tempo até contar como ausente"
+            rotulo="Tempo até o relógio parar por inatividade"
             valor={String(p.limiteAusenciaMin)}
             onChange={(v) => mudar({ limiteAusenciaMin: Number(v) })}
             opcoes={[2, 5, 10, 20].map((m) => ({ valor: String(m), rotulo: `${m} min` }))}
@@ -193,7 +185,7 @@ function CardPreferencias() {
             />
           )}
         </Campo>
-        <p className="text-xs text-muted-foreground">Mudanças valem a partir do próximo pomodoro.</p>
+        <p className="text-xs text-muted-foreground">O relógio volta sozinho quando você mexer no PC, no mesmo dia. Mudanças valem a partir do próximo play.</p>
       </div>
     </div>
   )
