@@ -290,9 +290,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | INSD-02 | P1: Insight do dia | T21, T22 | Implementing |
 | INSD-03 | P1: Insight do dia | T18, T26 | Implementing |
 | INSD-04 | P1: Insight do dia | T23, T25 | Implementing |
-| INSD-05 | P1: Insight do dia | T25 | In Tasks |
-| INSD-06 | P1: Insight do dia | T25 | In Tasks |
-| INSD-07 | P1: Insight do dia | T25 | In Tasks |
+| INSD-05 | P1: Insight do dia | T25 | Implementing |
+| INSD-06 | P1: Insight do dia | T25 | Implementing |
+| INSD-07 | P1: Insight do dia | T25 | Implementing |
 | INSD-08 | P1: Insight do dia | T26 | In Tasks |
 | INSD-09 | P1: Insight do dia | T22 | Implementing |
 | INSD-10 | P1: Insight do dia | T24, T26 | Implementing |

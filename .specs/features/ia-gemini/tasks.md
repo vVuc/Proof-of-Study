@@ -834,6 +834,8 @@ T37 → T38 → T39
 
 #### T25: Sugestões nos grupos do relato
 
+**Status**: ✅ Concluída
+
 **What**: `sugestoes.ts` com `aceitar`, `aceitarTodas` e `estadoDaSugestao` (aceita = ajuste igual; recusada; pendente) e, no `GruposDoDia`, a marca "Sugestão da IA" com o tipo, o motivo, "Aceitar" e "Recusar".
 **Where**: `src/features/ia/utils/sugestoes.ts`
 **Depends on**: T23, T24
@@ -847,12 +849,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Sem aceitar, os ajustes não mudam (teste)
-- [ ] `aceitar` aplica o ajuste daquele grupo (teste)
-- [ ] `aceitarTodas` pula as recusadas e as já aceitas (teste)
-- [ ] Os grupos mostram a sugestão e os dois botões
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 4
+- [x] Sem aceitar, os ajustes não mudam (teste)
+- [x] `aceitar` aplica o ajuste daquele grupo (teste)
+- [x] `aceitarTodas` pula as recusadas e as já aceitas (teste)
+- [x] Os grupos mostram a sugestão e os dois botões
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 4
 
 **Tests**: unit
 **Gate**: quick
