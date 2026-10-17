@@ -54,7 +54,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Modelos do Whisper já baixados | Apagados na primeira abertura da versão nova | Liberam de 60 a 190 MB que o app não usa mais | y |
 | Entrega da voz | A voz ao vivo e a saída do Whisper vão na mesma versão | Evita uma versão sem nenhuma voz | y |
 | Ligar e desligar a IA | Um interruptor único "Usar IA (Gemini)" nas opções, desligado por padrão, que só liga com chave válida e consentimento | Coerente com "dados só no PC" do README | y |
-| Teste da chave com a IA desligada | A única chamada ao Gemini permitida com a IA desligada é o teste da chave pedido pela pessoa; ela entra no log só com tipo e resultado, sem chave nem conteúdo | Decidido na verificação: IAERR-06 pede o registro de toda chamada, e o teste da chave é uma ação explícita da pessoa | y |
+| Teste da chave com a IA desligada | A única chamada ao Gemini permitida com a IA desligada é o teste da chave pedido pela pessoa; ela entra no log só com tipo, duração e resultado, sem chave nem conteúdo | Decidido na verificação: IAERR-06 pede o registro de toda chamada, e o teste da chave é uma ação explícita da pessoa | y |
 | O que é enviado ao Gemini | "Sobre você", matérias (nome e termos), metas da semana, objetivos do dia, itens da Rotina com horário, relatos (texto e humor), grupos de janelas do dia (rótulo, título mais longo do grupo, programa, intervalos e tipo atual), pausas e o áudio da fala (ao vivo, em pedaços); nunca anotações nem imagens | Basta para classificar, transcrever e escrever os insights | y |
 | Plano gratuito do Gemini | O consentimento avisa que, no plano gratuito, o Google pode usar o conteúdo para melhorar os produtos dele e ter revisão humana | Termos oficiais da API (ai.google.dev/gemini-api/terms) | y |
 | Onde a chave fica | Fora do `dados.json`, do log e do "Exportar diagnóstico"; o mecanismo (cofre do sistema ou arquivo à parte) sai no Design | A chave é um segredo; o `dados.json` pode ser copiado | y |
@@ -341,6 +341,6 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 - [ ] Com Trabalho das 9h às 18h na Rotina, um dia inteiro de VS Code no expediente deixa o banco de horas sem nenhum minuto desse expediente, sem precisar da IA.
 - [ ] Num dia sem horário de trabalho, aceitar todas as sugestões da IA deixa no banco de horas só o tempo de estudo.
-- [ ] Com a IA desligada, o log não tem nenhuma chamada ao Gemini, exceto o teste da chave pedido pela pessoa, que fica no log só com tipo e resultado.
+- [ ] Com a IA desligada, o log não tem nenhuma chamada ao Gemini, exceto o teste da chave pedido pela pessoa, que fica no log só com tipo, duração e resultado.
 - [ ] Na fala, o texto parcial aparece em menos de 2 segundos, e os objetivos aparecem até 10 segundos depois de salvar o plano, numa conexão comum.
 - [ ] Uma falha da IA nunca impede salvar o relato final.
