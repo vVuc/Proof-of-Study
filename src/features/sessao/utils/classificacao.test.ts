@@ -85,6 +85,33 @@ describe('classificar', () => {
   })
 })
 
+describe('classificar com objetivo de trabalho', () => {
+  const rust: Materia = { id: 'rust', nome: 'Rust', cor: '#000' }
+  const vscode: Regra = { id: 'vscode', rotulo: 'VS Code', campo: 'app', termos: ['code'], tipo: 'estudo' }
+  const empresa: Objetivo = { id: 't1', dia: '2026-10-20', titulo: 'empresa-api', tipo: 'trabalho', origem: 'manual', ordem: 0 }
+  const ctx = { regras: [vscode, ...regras], materias: [rust], objetivos: [empresa] }
+
+  it('a janela do objetivo de trabalho conta nele, e não na matéria que ela também cita (TRAB-08)', () => {
+    const classe = classificar(janela('empresa-api [Rust] - VS Code', 'code'), ctx)
+    expect(classe).toMatchObject({ tipo: 'trabalho', chave: 'objetivo:t1', objetivoId: 't1' })
+    expect(classe.materiaId).toBeUndefined()
+  })
+
+  it('vence uma regra de estudo e uma regra de fora (TRAB-08)', () => {
+    // O Chrome está marcado como estudo e o YouTube como fora.
+    expect(classificar(janela('empresa-api - Painel de deploy'), ctx)).toMatchObject({ tipo: 'trabalho', chave: 'objetivo:t1' })
+    expect(classificar(janela('empresa-api - demo - YouTube - Google Chrome'), ctx)).toMatchObject({ tipo: 'trabalho', chave: 'objetivo:t1' })
+  })
+
+  it('objetivo de trabalho pulado não classifica (TRAB-08)', () => {
+    const pulado = { ...empresa, pulado: true }
+    expect(classificar(janela('empresa-api [Rust] - VS Code', 'code'), { ...ctx, objetivos: [pulado] })).toMatchObject({
+      tipo: 'estudo',
+      chave: 'materia:rust',
+    })
+  })
+})
+
 describe('termosDoObjetivo', () => {
   it('ignora palavras curtas e comuns', () => {
     expect(termosDoObjetivo({ titulo: 'Estudar a cadeira de jardim' })).toEqual(['cadeira', 'jardim'])

@@ -102,6 +102,25 @@ describe('resumir', () => {
     expect(totaisDaSessao(r).trabalhoMs).toBe(25 * MIN)
   })
 
+  it('o tempo da janela de um objetivo de trabalho fica nesse objetivo e no total de trabalho (TRAB-09)', () => {
+    const empresa: Objetivo = { ...objetivo('t1', undefined, 'empresa-api'), tipo: 'trabalho' }
+    const trechos = [trecho(30, 'Inglês - aula 3 - YouTube'), trecho(40, 'empresa-api [Blender] - VS Code', 'code')]
+    const r = resumir(trechos, { regras, materias, objetivos: [objetivo('o1', 'ingles'), empresa] })
+    expect(r.porObjetivo).toEqual({ o1: 30 * MIN, t1: 40 * MIN })
+    expect(r.trabalhoMs).toBe(40 * MIN)
+    expect(r.focoMs).toBe(30 * MIN)
+    expect(r.porMateria).toEqual({ ingles: 30 * MIN })
+  })
+
+  it('janela de um objetivo de estudo corrigida para trabalho não soma nesse objetivo (TRAB-09)', () => {
+    const objetivos = [objetivo('o1', 'ingles'), objetivo('o2', undefined, 'Modelar a cadeira')]
+    const trechos = [trecho(20, 'Modelar a cadeira - Blender', 'blender'), trecho(10, 'apostila.pdf', 'sumatrapdf')]
+    const r = resumir(trechos, { regras, materias, objetivos }, { 'objetivo:o2': 'trabalho' })
+    expect(r.trabalhoMs).toBe(20 * MIN)
+    expect(r.porObjetivo).toEqual({})
+    expect(r.focoMs).toBe(10 * MIN)
+  })
+
   it('faixas juntam trechos seguidos do mesmo tipo', () => {
     const r = resumir(dia(), { regras, materias })
     expect(r.faixas.map((f) => f.tipo)).toEqual(['estudo', 'fora', 'estudo'])

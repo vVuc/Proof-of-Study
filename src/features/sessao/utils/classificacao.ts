@@ -166,19 +166,25 @@ export function termosDoObjetivo(o: Pick<Objetivo, 'titulo' | 'termos' | 'materi
   return [...(o.termos ?? []).map((t) => normalizar(t.trim())), ...doTitulo].filter(Boolean)
 }
 
-/** Objetivo ou matéria cujos termos aparecem no título (ou no nome do programa) da janela. */
-function porTermos(titulo: string, processo: string, contexto: ContextoClassificacao): Pick<Classe, 'chave' | 'rotulo' | 'materiaId' | 'objetivoId'> | null {
+/**
+ * Objetivo ou matéria cujos termos aparecem no título (ou no nome do programa) da janela. Os objetivos de trabalho
+ * vêm primeiro e dão trabalho; os de estudo e as matérias dão estudo.
+ */
+function porTermos(titulo: string, processo: string, contexto: ContextoClassificacao): Pick<Classe, 'chave' | 'rotulo' | 'tipo' | 'materiaId' | 'objetivoId'> | null {
   const alvo = `${normalizar(titulo)} ${normalizar(processo)}`
+  const casa = (o: Objetivo) => termosDoObjetivo(o).some((t) => contemPalavra(alvo, t))
+  const trabalho = (contexto.objetivos ?? []).find((o) => !o.pulado && o.tipo === 'trabalho' && casa(o))
+  if (trabalho) return { chave: `objetivo:${trabalho.id}`, rotulo: trabalho.titulo || 'Objetivo', tipo: 'trabalho', objetivoId: trabalho.id }
   for (const o of contexto.objetivos ?? []) {
     if (o.pulado) continue
-    if (termosDoObjetivo(o).some((t) => contemPalavra(alvo, t))) {
+    if (casa(o)) {
       const materia = contexto.materias?.find((m) => m.id === o.materiaId)
-      return { chave: `objetivo:${o.id}`, rotulo: o.titulo || materia?.nome || 'Objetivo', objetivoId: o.id, materiaId: o.materiaId }
+      return { chave: `objetivo:${o.id}`, rotulo: o.titulo || materia?.nome || 'Objetivo', tipo: 'estudo', objetivoId: o.id, materiaId: o.materiaId }
     }
   }
   for (const m of contexto.materias ?? []) {
     if (m.arquivada) continue
-    if (termosDaMateria(m).some((t) => contemPalavra(alvo, t))) return { chave: `materia:${m.id}`, rotulo: m.nome, materiaId: m.id }
+    if (termosDaMateria(m).some((t) => contemPalavra(alvo, t))) return { chave: `materia:${m.id}`, rotulo: m.nome, tipo: 'estudo', materiaId: m.id }
   }
   return null
 }
@@ -186,10 +192,11 @@ function porTermos(titulo: string, processo: string, contexto: ContextoClassific
 /**
  * Em que grupo o trecho entra e como conta por padrão. A ordem:
  * 1. casos fixos (captura pausada, ausência, o próprio app);
- * 2. termos dos objetivos do dia e das matérias no título: estudo daquela matéria (separa o tutorial de Blender
- *    no YouTube do vídeo qualquer no mesmo site);
- * 3. regras, as de título antes das de app (a primeira que casa decide);
- * 4. sem regra: fora do estudo.
+ * 2. termos dos objetivos de trabalho do dia no título: trabalho, mesmo que a janela case com estudo ou com uma regra;
+ * 3. termos dos objetivos de estudo do dia e das matérias no título: estudo daquela matéria (separa o tutorial de
+ *    Blender no YouTube do vídeo qualquer no mesmo site);
+ * 4. regras, as de título antes das de app (a primeira que casa decide);
+ * 5. sem regra: fora do estudo.
  */
 export function classificar(trecho: JanelaLida, contexto: ContextoClassificacao | Regra[]): Classe {
   const ctx = Array.isArray(contexto) ? { regras: contexto } : contexto
@@ -197,7 +204,7 @@ export function classificar(trecho: JanelaLida, contexto: ContextoClassificacao 
   if (trecho.ausente) return { chave: 'ausente', rotulo: 'Ausente do PC', tipo: 'fora' }
   if (trecho.proprio) return { chave: 'proprio', rotulo: 'Proof of Study', tipo: 'ignorar', fixo: true }
   const termo = porTermos(trecho.titulo, trecho.processo, ctx)
-  if (termo) return { ...termo, tipo: 'estudo' }
+  if (termo) return termo
   const regra = regraQueCasa(ctx.regras, trecho.titulo, trecho.processo)
   if (regra)
     return { chave: `regra:${regra.id}`, rotulo: regra.rotulo, tipo: regra.tipo, materiaId: regra.tipo === 'estudo' ? regra.materiaId : undefined }

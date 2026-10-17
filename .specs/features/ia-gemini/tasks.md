@@ -178,6 +178,8 @@ T37 → T38 → T39
 
 #### T3: Objetivo de trabalho na classificação
 
+**Status**: ✅ Concluída
+
 **What**: Em `classificar`, os termos de objetivos de trabalho do dia vêm antes dos de estudo e das matérias e dão `tipo: 'trabalho'` com a chave `objetivo:<id>`; o tempo fica no objetivo.
 **Where**: `src/features/sessao/utils/classificacao.ts`
 **Depends on**: T2
@@ -191,12 +193,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] "empresa-api [Rust] - VS Code" com objetivo de trabalho "empresa-api" e matéria Rust vira trabalho no objetivo de trabalho (teste)
-- [ ] A janela de objetivo de trabalho vence uma regra de estudo e uma de fora (teste)
-- [ ] Objetivo de trabalho pulado não classifica (teste)
-- [ ] O resumo soma o tempo no `objetivoId` do objetivo de trabalho (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 4
+- [x] "empresa-api [Rust] - VS Code" com objetivo de trabalho "empresa-api" e matéria Rust vira trabalho no objetivo de trabalho (teste)
+- [x] A janela de objetivo de trabalho vence uma regra de estudo e uma de fora (teste)
+- [x] Objetivo de trabalho pulado não classifica (teste)
+- [x] O resumo soma o tempo no `objetivoId` do objetivo de trabalho (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 4
 
 **Tests**: unit
 **Gate**: quick

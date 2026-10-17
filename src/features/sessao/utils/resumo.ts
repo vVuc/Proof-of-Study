@@ -39,7 +39,7 @@ export interface Resumo {
   maiorTrechoMs: number
   /** Estudo atribuído a cada matéria. */
   porMateria: Record<string, number>
-  /** Estudo atribuído a cada objetivo do dia. */
+  /** Tempo atribuído a cada objetivo do dia: estudo, e trabalho nos objetivos de trabalho. */
   porObjetivo: Record<string, number>
   /** Estudo que não foi ligado a nenhum objetivo nem matéria. */
   semObjetivoMs: number
@@ -117,7 +117,9 @@ export function resumir(trechos: Trecho[], contexto: ContextoClassificacao | Reg
   const porMateria: Record<string, number> = {}
   const porObjetivo: Record<string, number> = {}
   let semObjetivoMs = 0
+  const deTrabalho = (id: string) => ctx.objetivos?.some((o) => o.id === id && o.tipo === 'trabalho')
   for (const g of lista) {
+    if (g.tipo === 'trabalho' && g.objetivoId && deTrabalho(g.objetivoId)) porObjetivo[g.objetivoId] = (porObjetivo[g.objetivoId] ?? 0) + g.ms
     if (g.tipo !== 'estudo') continue
     if (g.materiaId) porMateria[g.materiaId] = (porMateria[g.materiaId] ?? 0) + g.ms
     if (g.objetivoId) porObjetivo[g.objetivoId] = (porObjetivo[g.objetivoId] ?? 0) + g.ms
