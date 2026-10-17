@@ -1,5 +1,7 @@
-import { deISO, formatarHora, formatarHorario, inicioDaSemana, type DataISO } from '@/shared/lib/datas'
-import { temHorario, type Ajuste, type Dados, type Pausa, type Trecho } from '@/store/model/dados'
+import { DIAS_SEMANA, deISO, formatarHora, formatarHorario, inicioDaSemana, somarDias, type DataISO } from '@/shared/lib/datas'
+import { temHorario, type Ajuste, type Dados, type InsightDia, type Pausa, type Trecho } from '@/store/model/dados'
+import { linhasPorDia, resumoDasPausas } from '@/features/autoanalise/utils/insights'
+import { saldoDaMateria } from '@/features/banco/utils/banco'
 import { relatoDoDia } from '@/features/banco/utils/validacao'
 import { contextoDoDia, objetivosDoDia, sessoesDoDia } from '@/features/hoje/utils/dia'
 import { resumir } from '@/features/sessao/utils/resumo'
@@ -57,6 +59,7 @@ function materiasComIds(dados: Pick<Dados, 'materias'>) {
   const ativas = dados.materias.filter((m) => !m.arquivada)
   const curto = new Map(ativas.map((m, i) => [m.id, `m${i + 1}`]))
   return {
+    ativas,
     lista: ativas.map((m) => ({ id: curto.get(m.id)!, nome: m.nome, termos: m.termos ?? [] })),
     curto: (id: string | undefined) => (id ? (curto.get(id) ?? null) : null),
     mapa: Object.fromEntries(ativas.map((m) => [curto.get(m.id)!, m.id])),
@@ -157,4 +160,69 @@ export function montarPedidoDoPlano(dados: Dados, dia: DataISO, texto: string): 
     pedido: { tipo: 'plano', sistema: SISTEMA_DO_PLANO, entrada: JSON.stringify(entrada), esquema: ESQUEMA_DO_PLANO },
     mapa: { grupos: {}, materias: materias.mapa },
   }
+}
+
+const SISTEMA_DA_SEMANA = `Você analisa a semana de uma pessoa que estuda e trabalha no mesmo computador. A entrada é um JSON com o contexto que ela escreveu ("sobreVoce"), as matérias (ids m1, m2…, com a meta e as horas validadas da semana), os itens da Rotina com horário e os sete dias da semana, de segunda a domingo. Cada dia traz os objetivos, o relato inicial (o plano), o relato final com o humor de 1 a 5, os totais em minutos de estudo, trabalho, fora do estudo e pausas, e o insight do dia, quando existe.
+
+Escreva três partes:
+1. "comoFoi": um resumo da semana, com quanto foi estudo, trabalho e fora do estudo, e como ela se compara com as metas e com os planos dos dias.
+2. "padroes": o que se repete entre os dias (horários, matérias, humor, pausas, o que costuma tirar do estudo), como fatos observados.
+3. "proximaSemana": ajustes pequenos e concretos para a próxima semana, a partir das metas, da Rotina e dos padrões.
+
+${REGRAS_DE_TOM}`
+
+const ESQUEMA_DA_SEMANA = {
+  type: 'object',
+  properties: {
+    comoFoi: { type: 'string' },
+    padroes: { type: 'string' },
+    proximaSemana: { type: 'string' },
+  },
+  required: ['comoFoi', 'padroes', 'proximaSemana'],
+}
+
+/**
+ * O pedido do insight da semana (INSS-02): o "Sobre você", as matérias com a meta e as horas validadas da semana, os
+ * itens da Rotina com horário e, de cada dia (de segunda a domingo), os objetivos, os relatos inicial e final com o
+ * humor, os totais de estudo, trabalho, fora e pausas e o insight do dia salvo. A resposta não cita ids, então não há mapa.
+ */
+export function montarPedidoDaSemana(dados: Dados, semana: DataISO): PedidoIA {
+  const materias = materiasComIds(dados)
+  const entrada = {
+    semana,
+    sobreVoce: dados.preferencias.sobreVoce,
+    materias: materias.ativas.map((m) => {
+      const { meta, noBancoMs } = saldoDaMateria(dados, m, semana)
+      return { id: materias.curto(m.id), nome: m.nome, metaMin: meta?.minutos ?? null, etapa: meta?.descricao ?? null, validadoMin: minutos(noBancoMs) }
+    }),
+    rotina: dados.blocos.filter(temHorario).map((b) => ({
+      titulo: b.titulo,
+      categoria: b.categoria,
+      dias: DIAS_SEMANA.filter((d) => b.dias.includes(d.dia)).map((d) => d.curto),
+      inicio: formatarHorario(b.inicio),
+      fim: formatarHorario(b.fim),
+    })),
+    dias: DIAS_SEMANA.map((d, i) => {
+      const dia = somarDias(semana, i)
+      const sessoes = sessoesDoDia(dados, dia)
+      const linha = linhasPorDia(dados, sessoes)[0]
+      const final = relatoDoDia(dados.relatos, dia, 'final')
+      return {
+        dia,
+        diaDaSemana: d.nome,
+        objetivos: objetivosDoDia(dados, dia).map((o) => ({ tipo: o.tipo ?? 'estudo', materia: materias.curto(o.materiaId), titulo: o.titulo ?? null })),
+        relatoInicial: relatoDoDia(dados.relatos, dia, 'inicial')?.texto || null,
+        relatoFinal: final?.texto || null,
+        humor: final?.humor ?? null,
+        totais: {
+          estudoMin: minutos(linha?.focoMs ?? 0),
+          trabalhoMin: minutos(linha?.trabalhoMs ?? 0),
+          foraMin: minutos(linha?.foraMs ?? 0),
+          pausasMin: minutos(resumoDasPausas(sessoes).totalMs),
+        },
+        insightDoDia: dados.insights.find((i): i is InsightDia => i.tipo === 'dia' && i.dia === dia)?.texto ?? null,
+      }
+    }),
+  }
+  return { tipo: 'semana', sistema: SISTEMA_DA_SEMANA, entrada: JSON.stringify(entrada), esquema: ESQUEMA_DA_SEMANA }
 }

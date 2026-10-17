@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { dadosIniciais, type BlocoRotina, type Dados, type Materia, type Meta, type Objetivo, type Regra, type Relato, type Sessao, type Trecho } from '@/store/model/dados'
-import { montarPedidoDoDia, montarPedidoDoPlano, REGRAS_DE_TOM } from './prompts'
+import { dadosIniciais, type BlocoRotina, type Dados, type InsightDia, type Materia, type Meta, type Objetivo, type Regra, type Relato, type Sessao, type Trecho } from '@/store/model/dados'
+import { montarPedidoDaSemana, montarPedidoDoDia, montarPedidoDoPlano, REGRAS_DE_TOM } from './prompts'
 
 const MIN = 60_000
 // 19/10/2026 é uma segunda.
@@ -168,5 +168,120 @@ describe('montarPedidoDoPlano (PLANO-01)', () => {
     const objetivo = (esquema as { properties: { objetivos: { items: { properties: Record<string, unknown>; required: string[] } } } }).properties.objetivos.items
     expect(objetivo.properties.tipo).toEqual({ type: 'string', enum: ['estudo', 'trabalho'] })
     expect(objetivo.required).toEqual(['tipo', 'materia', 'titulo', 'termos'])
+  })
+})
+
+describe('montarPedidoDaSemana (INSS-02, INSS-06)', () => {
+  const TERCA = '2026-10-20'
+  const QUARTA = '2026-10-21'
+  const DOMINGO = '2026-10-25'
+  const SEMANA = [SEGUNDA, TERCA, QUARTA, '2026-10-22', '2026-10-23', '2026-10-24', DOMINGO]
+  const hora = (dia: number, h: number) => new Date(2026, 9, dia, h).getTime()
+  const relato = (dia: string, momento: Relato['momento'], texto: string, criadoEm: number, humor?: number): Relato => ({
+    id: crypto.randomUUID(),
+    dia,
+    momento,
+    texto,
+    origem: 'texto',
+    humor,
+    criadoEm,
+    atrasado: false,
+  })
+  const insightDeSegunda: InsightDia = {
+    id: crypto.randomUUID(),
+    tipo: 'dia',
+    dia: SEGUNDA,
+    texto: 'Segunda com 1h de estudo de Rust e a reunião no meio.',
+    sugestoes: [],
+    modelo: 'gemini-3.8-flash',
+    criadoEm: as(22),
+  }
+  // Terça: 30 min de estudo de Rust (sem relato final, então ainda não validado), 120 min de trabalho, 10 min fora.
+  const sessaoDeTerca: Sessao = {
+    ...sessao,
+    id: crypto.randomUUID(),
+    dia: TERCA,
+    pausas: [],
+    trechos: [],
+    focoMs: 30 * MIN,
+    foraMs: 10 * MIN,
+    trabalhoMs: 120 * MIN,
+    focoPorMateria: { [rust.id]: 30 * MIN },
+  }
+  // Fora da semana: o domingo anterior e a segunda seguinte não entram.
+  const sessaoDaSemanaPassada: Sessao = { ...sessao, id: crypto.randomUUID(), dia: '2026-10-18', focoMs: 999 * MIN }
+  const semana = (): Dados =>
+    dados({
+      sessoes: [sessao, sessaoDeTerca, sessaoDaSemanaPassada],
+      relatos: [
+        planoDoDia,
+        relato(SEGUNDA, 'final', 'Estudei Rust e corrigi o bug.', as(22), 4),
+        relato(TERCA, 'inicial', 'Revisar o inglês', hora(20, 8)),
+        relato(DOMINGO, 'final', 'Dia de descanso.', hora(25, 22), 2),
+        relato('2026-10-18', 'final', 'Texto da semana passada', hora(18, 22), 5),
+        relato('2026-10-26', 'inicial', 'Texto da semana seguinte', hora(26, 8)),
+      ],
+      insights: [insightDeSegunda],
+    })
+  const pedido = (d: Dados = semana()) => montarPedidoDaSemana(d, SEGUNDA)
+  const entradaDaSemana = (d: Dados = semana()) => JSON.parse(pedido(d).entrada)
+
+  it('a entrada traz os sete dias, de segunda a domingo, com os relatos inicial e final e o humor', () => {
+    const e = entradaDaSemana()
+    expect(e.dias.map((d: { dia: string }) => d.dia)).toEqual(SEMANA)
+    expect(e.dias[0]).toMatchObject({ diaDaSemana: 'Segunda', relatoInicial: 'Estudar Rust e corrigir o bug da empresa-api', relatoFinal: 'Estudei Rust e corrigi o bug.', humor: 4 })
+    expect(e.dias[1]).toMatchObject({ relatoInicial: 'Revisar o inglês', relatoFinal: null, humor: null })
+    expect(e.dias[2]).toMatchObject({ diaDaSemana: 'Quarta', relatoInicial: null, relatoFinal: null, humor: null })
+    expect(e.dias[6]).toMatchObject({ diaDaSemana: 'Domingo', relatoInicial: null, relatoFinal: 'Dia de descanso.', humor: 2 })
+    expect(pedido().entrada).not.toContain('Texto da semana')
+  })
+
+  it('o insight do dia salvo entra no dia dele, e os dias sem insight vêm com null', () => {
+    const dias = entradaDaSemana().dias
+    expect(dias[0].insightDoDia).toBe('Segunda com 1h de estudo de Rust e a reunião no meio.')
+    expect(dias[1].insightDoDia).toBeNull()
+    expect(dias[6].insightDoDia).toBeNull()
+  })
+
+  it('a instrução usa as mesmas regras de idioma e de tom do insight do dia (INSS-06)', () => {
+    const { tipo, sistema } = pedido()
+    expect(tipo).toBe('semana')
+    expect(sistema).toContain(REGRAS_DE_TOM)
+    expect(montarPedidoDoDia(semana(), SEGUNDA, {}).pedido.sistema).toContain(REGRAS_DE_TOM)
+  })
+
+  it('a entrada traz o "Sobre você", as matérias com a meta e as horas validadas da semana e os itens da Rotina com horário', () => {
+    const e = entradaDaSemana()
+    expect(e.semana).toBe(SEGUNDA)
+    expect(e.sobreVoce).toBe('Sou dev na empresa X; o repositório empresa-api é trabalho.')
+    // Só a segunda tem relato final: os 30 min de Rust da terça ainda não estão validados.
+    expect(e.materias).toEqual([
+      { id: 'm1', nome: 'Rust', metaMin: 300, etapa: 'Ownership', validadoMin: 60 },
+      { id: 'm2', nome: 'Inglês', metaMin: null, etapa: null, validadoMin: 0 },
+    ])
+    expect(e.rotina).toEqual([
+      { titulo: 'Trabalho', categoria: 'trabalho', dias: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'], inicio: '09:00', fim: '18:00' },
+      { titulo: 'Treino', categoria: 'treino', dias: ['Sáb'], inicio: '08:00', fim: '09:00' },
+    ])
+  })
+
+  it('cada dia traz os objetivos e os totais de estudo, trabalho, fora e pausas em minutos', () => {
+    const dias = entradaDaSemana().dias
+    expect(dias[0].objetivos).toEqual([
+      { tipo: 'estudo', materia: 'm1', titulo: null },
+      { tipo: 'trabalho', materia: null, titulo: 'Corrigir o bug' },
+    ])
+    expect(dias[0].totais).toEqual({ estudoMin: 60, trabalhoMin: 0, foraMin: 45, pausasMin: 15 })
+    expect(dias[1].totais).toEqual({ estudoMin: 30, trabalhoMin: 120, foraMin: 10, pausasMin: 0 })
+    expect(dias[2]).toMatchObject({ objetivos: [], totais: { estudoMin: 0, trabalhoMin: 0, foraMin: 0, pausasMin: 0 } })
+    expect(pedido().entrada).not.toContain(rust.id)
+  })
+
+  it('o esquema pede as três partes: comoFoi, padroes e proximaSemana', () => {
+    expect(pedido().esquema).toEqual({
+      type: 'object',
+      properties: { comoFoi: { type: 'string' }, padroes: { type: 'string' }, proximaSemana: { type: 'string' } },
+      required: ['comoFoi', 'padroes', 'proximaSemana'],
+    })
   })
 })

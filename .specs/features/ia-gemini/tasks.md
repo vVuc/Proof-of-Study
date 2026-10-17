@@ -1191,6 +1191,8 @@ T37 → T38 → T39
 
 #### T37: Pedido do insight da semana
 
+**Status**: ✅ Concluída
+
 **What**: `montarPedidoDaSemana(dados, semana)` com `REGRAS_DE_TOM`, o "Sobre você", as matérias com as metas e as horas validadas, os itens da Rotina com horário e, por dia, os objetivos, os relatos com o humor, os totais e o insight do dia salvo; o esquema tem `comoFoi`, `padroes` e `proximaSemana`.
 **Where**: `src/features/ia/utils/prompts.ts`
 **Depends on**: T22
@@ -1204,11 +1206,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] A entrada traz os sete dias com os relatos inicial e final e o humor (teste)
-- [ ] O insight do dia salvo entra quando existe (teste)
-- [ ] As regras de tom são as mesmas do dia (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 3
+- [x] A entrada traz os sete dias com os relatos inicial e final e o humor (teste)
+- [x] O insight do dia salvo entra quando existe (teste)
+- [x] As regras de tom são as mesmas do dia (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 3
 
 **Tests**: unit
 **Gate**: quick
