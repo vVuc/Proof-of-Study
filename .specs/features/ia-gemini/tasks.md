@@ -267,6 +267,8 @@ T37 → T38 → T39
 
 #### T6: "Trabalho" nas correções do relato
 
+**Status**: ✅ Concluída
+
 **What**: O select de cada grupo em `GruposDoDia` ganha "Trabalho".
 **Where**: `src/features/relatos/components/GruposDoDia.tsx`
 **Depends on**: T1
@@ -280,8 +282,8 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Escolher "Trabalho" num grupo grava o ajuste `trabalho` e muda o total do relato
-- [ ] Gate passa: build
+- [x] Escolher "Trabalho" num grupo grava o ajuste `trabalho` e muda o total do relato
+- [x] Gate passa: build
 
 **Tests**: none
 **Gate**: build

@@ -6,12 +6,12 @@ import type { Ajuste } from '@/store/model/dados'
 import { LinhaGrupo } from '@/features/sessao/components/partes'
 import type { Grupo } from '@/features/sessao/utils/resumo'
 
-/** Valor atual do grupo no seletor: a matéria do estudo, estudo sem matéria, fora ou ignorar. */
+/** Valor atual do grupo no seletor: a matéria do estudo, estudo sem matéria, trabalho, fora ou ignorar. */
 const valorDoGrupo = (g: Grupo): Ajuste => (g.tipo === 'estudo' && g.materiaId ? `materia:${g.materiaId}` : g.tipo)
 
 /**
  * "Para onde foi o tempo", com a correção: cada grupo de janelas pode ir para outra matéria, para estudo sem
- * matéria, para fora ou ser ignorado. Vale só para este dia; as regras não mudam.
+ * matéria, para trabalho, para fora ou ser ignorado. Vale só para este dia; as regras não mudam.
  */
 export function GruposDoDia({
   grupos,
@@ -46,6 +46,7 @@ export function GruposDoDia({
                   </SelectItem>
                 ))}
                 <SelectItem value="estudo">Estudo sem matéria</SelectItem>
+                <SelectItem value="trabalho">Trabalho</SelectItem>
                 <SelectItem value="fora">Fora do estudo</SelectItem>
                 <SelectItem value="ignorar">Ignorar</SelectItem>
               </SelectContent>
