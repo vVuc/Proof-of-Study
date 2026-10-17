@@ -84,6 +84,82 @@ fn pasta_dos_modelos(app: &AppHandle) -> Result<std::path::PathBuf, String> {
     Ok(app.path().app_data_dir().map_err(|e| e.to_string())?.join("modelos"))
 }
 
+// Protocolo da transcrição ao vivo do Gemini (ai.google.dev/gemini-api/docs/live-api/live-transcribe).
+
+/// Modelo da transcrição ao vivo, fixo no código.
+pub const MODELO_VOZ: &str = "models/gemini-3.5-transcribe-live";
+/// 100 ms de áudio em PCM de 16 bits, 16 kHz, mono: 1.600 amostras de 2 bytes.
+pub const BYTES_POR_PEDACO: usize = 3_200;
+/// O vocabulário próprio da transcrição aceita até 100 termos (VOZ-04).
+pub const MAX_TERMOS: usize = 100;
+
+/// Amostras de -1.0 a 1.0 em PCM de 16 bits little-endian. O `as` satura: 1.0 vira 32767, não estoura.
+pub fn para_pcm16(amostras: &[f32]) -> Vec<u8> {
+    amostras.iter().flat_map(|s| ((s * 32_768.0) as i16).to_le_bytes()).collect()
+}
+
+/// Junta o áudio que chega do microfone e entrega pedaços de 100 ms. A sobra espera o próximo áudio.
+#[derive(Default)]
+pub struct Pedacos {
+    sobra: Vec<u8>,
+}
+
+impl Pedacos {
+    pub fn juntar(&mut self, audio: &[u8]) -> Vec<Vec<u8>> {
+        self.sobra.extend_from_slice(audio);
+        let inteiros = self.sobra.len() / BYTES_POR_PEDACO * BYTES_POR_PEDACO;
+        let resto = self.sobra.split_off(inteiros);
+        let prontos = std::mem::replace(&mut self.sobra, resto);
+        prontos.chunks(BYTES_POR_PEDACO).map(<[u8]>::to_vec).collect()
+    }
+
+    /// Bytes guardados à espera de completar um pedaço.
+    pub fn guardados(&self) -> usize {
+        self.sobra.len()
+    }
+}
+
+/// A primeira mensagem da sessão: o modelo, a saída em texto, o português e o vocabulário (até 100 termos).
+pub fn mensagem_setup(vocabulario: &[String]) -> serde_json::Value {
+    let termos: Vec<&String> = vocabulario.iter().take(MAX_TERMOS).collect();
+    serde_json::json!({
+        "setup": {
+            "model": MODELO_VOZ,
+            "generationConfig": { "responseModalities": ["TEXT"] },
+            "inputAudioTranscription": { "languageCodes": ["pt-BR"], "customVocabulary": termos },
+        }
+    })
+}
+
+/// Um pedaço de áudio, em base64.
+pub fn mensagem_audio(pcm: &[u8]) -> serde_json::Value {
+    use base64::Engine;
+    let dados = base64::engine::general_purpose::STANDARD.encode(pcm);
+    serde_json::json!({ "realtimeInput": { "audio": { "data": dados, "mimeType": "audio/pcm;rate=16000" } } })
+}
+
+/// Avisa o Gemini que o áudio acabou.
+pub fn mensagem_fim() -> serde_json::Value {
+    serde_json::json!({ "realtimeInput": { "audioStreamEnd": true } })
+}
+
+/// O texto que o Gemini devolve: o parcial ainda pode mudar; o final fecha um trecho da fala.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Transcricao {
+    Parcial(String),
+    Final(String),
+}
+
+/// Lê uma mensagem do Gemini. Tudo que não é transcrição (ou não é JSON) fica de fora.
+pub fn ler_mensagem(texto: &str) -> Option<Transcricao> {
+    let valor: serde_json::Value = serde_json::from_str(texto).ok()?;
+    let conteudo = valor.get("serverContent")?;
+    let texto_de = |campo: &str| conteudo.get(campo)?.get("text")?.as_str().map(str::to_owned);
+    texto_de("inputTranscription")
+        .map(Transcricao::Final)
+        .or_else(|| texto_de("interimInputTranscription").map(Transcricao::Parcial))
+}
+
 #[tauri::command]
 pub fn voz_estado(app: AppHandle, voz: State<Voz>, modelo: String) -> EstadoVoz {
     let pronto = self::modelo(&modelo)
@@ -499,6 +575,8 @@ mod imp {
 
 #[cfg(test)]
 mod testes {
+    use serde_json::json;
+
     use super::*;
 
     #[test]
@@ -506,5 +584,72 @@ mod testes {
         assert_eq!(modelo("base").unwrap().arquivo, "ggml-base-q5_1.bin");
         assert!(modelo("enorme").is_err());
         assert_eq!(voz_modelo_info("small".into()).unwrap().mb, 191);
+    }
+
+    #[test]
+    fn amostras_viram_pcm_de_16_bits_little_endian() {
+        // -1.0 → -32768 (0x8000), 0 → 0, 1.0 → 32767 (0x7FFF), cada um com o byte baixo primeiro.
+        assert_eq!(para_pcm16(&[-1.0, 0.0, 1.0]), vec![0x00, 0x80, 0x00, 0x00, 0xFF, 0x7F]);
+    }
+
+    #[test]
+    fn pedacos_de_100_ms_guardam_a_sobra() {
+        let audio: Vec<u8> = (0..4_000).map(|i| (i % 251) as u8).collect();
+        let mut pedacos = Pedacos::default();
+        let prontos = pedacos.juntar(&audio);
+        assert_eq!(prontos, vec![audio[..3_200].to_vec()]);
+        assert_eq!(pedacos.guardados(), 800);
+        // Os 800 bytes guardados abrem o próximo pedaço, antes do áudio novo.
+        let mais = vec![7u8; 2_400];
+        let prontos = pedacos.juntar(&mais);
+        assert_eq!(prontos.len(), 1);
+        assert_eq!(prontos[0][..800], audio[3_200..]);
+        assert_eq!(prontos[0][800..], mais[..]);
+        assert_eq!(pedacos.guardados(), 0);
+    }
+
+    #[test]
+    fn setup_tem_o_modelo_o_portugues_e_ate_100_termos() {
+        let termos: Vec<String> = (1..=150).map(|i| format!("termo{i}")).collect();
+        let setup = mensagem_setup(&termos);
+        assert_eq!(setup["setup"]["model"], "models/gemini-3.5-transcribe-live");
+        assert_eq!(setup["setup"]["generationConfig"]["responseModalities"], json!(["TEXT"]));
+        assert_eq!(setup["setup"]["inputAudioTranscription"]["languageCodes"], json!(["pt-BR"]));
+        let vocabulario = setup["setup"]["inputAudioTranscription"]["customVocabulary"].as_array().unwrap();
+        assert_eq!(vocabulario.len(), 100);
+        assert_eq!(vocabulario[0], "termo1");
+        assert_eq!(vocabulario[99], "termo100");
+        // Com poucos termos, vão todos.
+        let poucos = mensagem_setup(&["Rust".to_string(), "Blender".to_string()]);
+        assert_eq!(poucos["setup"]["inputAudioTranscription"]["customVocabulary"], json!(["Rust", "Blender"]));
+    }
+
+    #[test]
+    fn audio_vai_em_base64_e_o_fim_avisa_o_gemini() {
+        assert_eq!(
+            mensagem_audio(&[0x00, 0x80, 0xFF, 0x7F]),
+            json!({ "realtimeInput": { "audio": { "data": "AID/fw==", "mimeType": "audio/pcm;rate=16000" } } })
+        );
+        assert_eq!(mensagem_fim(), json!({ "realtimeInput": { "audioStreamEnd": true } }));
+    }
+
+    #[test]
+    fn mensagens_do_gemini_viram_texto_parcial_ou_final() {
+        assert_eq!(
+            ler_mensagem(r#"{"serverContent":{"interimInputTranscription":{"text":"hoje quero"}}}"#),
+            Some(Transcricao::Parcial("hoje quero".into()))
+        );
+        assert_eq!(
+            ler_mensagem(r#"{"serverContent":{"inputTranscription":{"text":"hoje quero estudar Blender"}}}"#),
+            Some(Transcricao::Final("hoje quero estudar Blender".into()))
+        );
+    }
+
+    #[test]
+    fn outras_mensagens_do_gemini_sao_ignoradas() {
+        assert_eq!(ler_mensagem(r#"{"setupComplete":{}}"#), None);
+        assert_eq!(ler_mensagem(r#"{"serverContent":{"turnComplete":true}}"#), None);
+        assert_eq!(ler_mensagem(r#"{"serverContent":{"inputTranscription":{}}}"#), None);
+        assert_eq!(ler_mensagem("não é json"), None);
     }
 }

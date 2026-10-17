@@ -987,6 +987,8 @@ T37 → T38 → T39
 
 #### T30: Protocolo da transcrição ao vivo
 
+**Status**: ✅ Concluída
+
 **What**: Funções puras no `voz.rs`: `para_pcm16`, `Pedacos` (pedaços de 3.200 bytes), `mensagem_setup` (`gemini-3.5-transcribe-live`, `pt-BR`, até 100 termos), `mensagem_audio`, `mensagem_fim` e `ler_mensagem` (`interimInputTranscription` e `inputTranscription`); entram `base64`, `tokio-tungstenite` e `tokio`.
 **Where**: `src-tauri/src/voz.rs`
 **Depends on**: None
@@ -1000,11 +1002,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] -1.0, 0 e 1.0 viram os i16 LE certos (teste Rust)
-- [ ] 4.000 bytes dão um pedaço de 3.200 e guardam 800 (teste Rust)
-- [ ] O `setup` tem o modelo, `pt-BR` e no máximo 100 termos (teste Rust)
-- [ ] `ler_mensagem` separa o texto parcial do final e ignora outras mensagens (testes Rust)
-- [ ] Gate passa: full
+- [x] -1.0, 0 e 1.0 viram os i16 LE certos (teste Rust)
+- [x] 4.000 bytes dão um pedaço de 3.200 e guardam 800 (teste Rust)
+- [x] O `setup` tem o modelo, `pt-BR` e no máximo 100 termos (teste Rust)
+- [x] `ler_mensagem` separa o texto parcial do final e ignora outras mensagens (testes Rust)
+- [x] Gate passa: full
 
 **Tests**: unit
 **Gate**: full
