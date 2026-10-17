@@ -1160,6 +1160,8 @@ T37 → T38 → T39
 
 #### T36: Tirar o modelo de voz das preferências
 
+**Status**: ✅ Concluída
+
 **What**: `Preferencias` perde `modeloVoz`, `atualizarDados` remove o campo de dados salvos, e as opções (`CardPreferencias`) perdem a escolha do modelo.
 **Where**: `src/store/model/migracao.ts`
 **Depends on**: T35
@@ -1173,10 +1175,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Preferências salvas com `modeloVoz` abrem sem o campo e com o resto igual (teste)
-- [ ] Nenhuma referência a `modeloVoz` ou `ModeloVoz` sobra no código
-- [ ] Gate passa: build (última da fase)
-- [ ] Contagem do front ≥ anterior + 1
+- [x] Preferências salvas com `modeloVoz` abrem sem o campo e com o resto igual (teste)
+- [x] Nenhuma referência a `modeloVoz` ou `ModeloVoz` sobra no código
+- [x] Gate passa: build (última da fase)
+- [x] Contagem do front ≥ anterior + 1
 
 **Tests**: unit
 **Gate**: build

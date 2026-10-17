@@ -130,19 +130,8 @@ export function CardPreferencias() {
           {p.relatos && (
             <label className="flex items-center gap-2 text-sm">
               <Checkbox checked={p.voz} onCheckedChange={(v) => mudar({ voz: v === true })} />
-              Falar o relato (a transcrição roda no PC)
+              Falar o relato (transcrição ao vivo pelo Gemini, com a IA ligada)
             </label>
-          )}
-          {p.relatos && p.voz && (
-            <ControleSegmentado
-              rotulo="Modelo de voz"
-              valor={p.modeloVoz}
-              onChange={(modeloVoz) => mudar({ modeloVoz })}
-              opcoes={[
-                { valor: 'base', rotulo: 'Leve · 60 MB' },
-                { valor: 'small', rotulo: 'Mais preciso · 190 MB' },
-              ]}
-            />
           )}
         </Campo>
 

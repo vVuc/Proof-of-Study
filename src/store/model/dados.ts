@@ -190,8 +190,6 @@ export interface InsightSemana {
 /** Um por dia e um por semana; gerar de novo substitui. */
 export type Insight = InsightDia | InsightSemana
 
-export type ModeloVoz = 'base' | 'small'
-
 export interface Preferencias {
   /** Lembrete de pausa a cada N minutos (o antigo pomodoro); `null` desliga. Não para a sessão. */
   cicloMin: number | null
@@ -211,7 +209,6 @@ export interface Preferencias {
   atalho: string | null
   iniciarComSistema: boolean
   voz: boolean
-  modeloVoz: ModeloVoz
   /** "Usar IA (Gemini)". Só fica ligada com chave salva e consentimento. */
   ia: boolean
   /** Momento do consentimento; `null` = nunca concordou. */
@@ -247,7 +244,6 @@ export const PREFERENCIAS_PADRAO: Preferencias = {
   atalho: null,
   iniciarComSistema: false,
   voz: true,
-  modeloVoz: 'base',
   ia: false,
   consentimentoIA: null,
   sobreVoce: '',

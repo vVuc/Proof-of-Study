@@ -19,8 +19,11 @@ export class DadosIncompativeis extends Error {}
 /** Sessão como foi salva até o formato 2 (um pomodoro de uma matéria) ou já no 3. */
 type SessaoSalva = Partial<Sessao> & Pick<Sessao, 'id' | 'inicio' | 'fim' | 'trechos' | 'focoMs' | 'foraMs' | 'anotacao' | 'imagens'>
 
-/** Preferências até o formato 2: o pomodoro tinha duração fixa. */
-type PreferenciasSalvas = Partial<Preferencias> & { duracaoMin?: number }
+/**
+ * Preferências como foram salvas: as de hoje ou com campos de formatos antigos, que saem na leitura (a duração fixa do
+ * pomodoro até o formato 2 e o modelo do Whisper até o 3).
+ */
+type PreferenciasSalvas = Partial<Preferencias> | Record<string, unknown>
 
 /** Pomodoro em andamento no formato 2. */
 interface SessaoAtualV2 {
@@ -69,7 +72,10 @@ export function atualizarDados(salvo: DadosSalvos | undefined, versao = VERSAO_D
     )
   }
   const v1 = versao < 2
-  const { duracaoMin: _pomodoro, ...preferenciasSalvas } = salvo.preferencias ?? {}
+  // Só ficam os campos que as preferências têm hoje.
+  const preferenciasSalvas = Object.fromEntries(
+    Object.entries(salvo.preferencias ?? {}).filter(([campo]) => Object.hasOwn(PREFERENCIAS_PADRAO, campo)),
+  ) as Partial<Preferencias>
   const preferencias: Preferencias = { ...PREFERENCIAS_PADRAO, ...preferenciasSalvas }
   // As regras da v1 eram só de distração por título; as novas trazem também os apps de estudo.
   const regras = v1 || !salvo.regras ? regrasPadrao() : salvo.regras

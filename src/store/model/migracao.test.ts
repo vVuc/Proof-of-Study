@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { classificar } from '@/features/sessao/utils/classificacao'
-import { VERSAO_DADOS, type Regra, type Trecho } from './dados'
+import { PREFERENCIAS_PADRAO, VERSAO_DADOS, type Regra, type Trecho } from './dados'
 import { atualizarDados, DadosIncompativeis, type DadosSalvos } from './migracao'
 
 const HORA = 3_600_000
@@ -190,5 +190,15 @@ describe('atualizarDados', () => {
     const janela = { titulo: 'Modelar a cadeira - Blender', processo: 'blender', proprio: false, ausente: false }
     const classe = classificar(janela, { regras: dados.regras, materias: dados.materias, objetivos: dados.objetivos })
     expect(classe).toMatchObject({ tipo: 'estudo', objetivoId: 'o1' })
+  })
+
+  it('preferências salvas com o modelo de voz do Whisper abrem sem o campo e com o resto igual (VOZ-09)', () => {
+    const salvo = v3()
+    const resto = Object.fromEntries(Object.entries(salvo.preferencias ?? {}).filter(([campo]) => campo !== 'modeloVoz'))
+    for (const versao of [3, VERSAO_DADOS]) {
+      const dados = atualizarDados(salvo, versao)
+      expect(dados.preferencias).not.toHaveProperty('modeloVoz')
+      expect(dados.preferencias).toEqual({ ...PREFERENCIAS_PADRAO, ...resto })
+    }
   })
 })
