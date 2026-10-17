@@ -295,8 +295,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | INSD-07 | P1: Insight do dia | T25 | In Tasks |
 | INSD-08 | P1: Insight do dia | T26 | In Tasks |
 | INSD-09 | P1: Insight do dia | T22 | Implementing |
-| INSD-10 | P1: Insight do dia | T24, T26 | In Tasks |
-| INSD-11 | P1: Insight do dia | T24, T26 | In Tasks |
+| INSD-10 | P1: Insight do dia | T24, T26 | Implementing |
+| INSD-11 | P1: Insight do dia | T24, T26 | Implementing |
 | INSD-12 | P1: Insight do dia | T21 | Implementing |
 | INSD-13 | P1: Insight do dia | T23 | Implementing |
 | IAERR-01 | P1: Falhas da IA | T14, T16, T17 | Implementing |
@@ -324,7 +324,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | INSS-01 | P2: Insight da semana | T39 | In Tasks |
 | INSS-02 | P2: Insight da semana | T37 | In Tasks |
 | INSS-03 | P2: Insight da semana | T38, T39 | In Tasks |
-| INSS-04 | P2: Insight da semana | T24, T39 | In Tasks |
+| INSS-04 | P2: Insight da semana | T24, T39 | Implementing |
 | INSS-05 | P2: Insight da semana | T39 | In Tasks |
 | INSS-06 | P2: Insight da semana | T37 | In Tasks |
 

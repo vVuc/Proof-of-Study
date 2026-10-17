@@ -804,6 +804,8 @@ T37 → T38 → T39
 
 #### T24: Insights no reducer
 
+**Status**: ✅ Concluída
+
 **What**: As ações `insight/salvar` (substitui o do mesmo dia ou da mesma semana) e `insight/recusar` (`{ dia, chave }`).
 **Where**: `src/store/reducer/dados-reducer.ts`
 **Depends on**: None
@@ -817,11 +819,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Salvar o insight de um dia que já tem um substitui, sem duplicar (teste)
-- [ ] O insight da semana é guardado pela segunda-feira (teste)
-- [ ] Recusar marca só a sugestão daquela chave (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 3
+- [x] Salvar o insight de um dia que já tem um substitui, sem duplicar (teste)
+- [x] O insight da semana é guardado pela segunda-feira (teste)
+- [x] Recusar marca só a sugestão daquela chave (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 3
 
 **Tests**: unit
 **Gate**: quick

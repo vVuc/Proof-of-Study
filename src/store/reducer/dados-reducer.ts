@@ -1,4 +1,5 @@
-import type { BlocoRotina, Dados, Materia, Meta, Objetivo, Preferencias, Regra, Relato, Sessao } from '../model/dados'
+import { deISO, inicioDaSemana, type DataISO } from '@/shared/lib/datas'
+import type { BlocoRotina, Dados, Insight, Materia, Meta, Objetivo, Preferencias, Regra, Relato, Sessao } from '../model/dados'
 import { regrasPadrao } from '../model/dados'
 import { recalcularDia } from '@/features/hoje/utils/dia'
 import { relatoDoDia } from '@/features/banco/utils/validacao'
@@ -20,6 +21,8 @@ export type Acao =
   | { tipo: 'regra/excluir'; id: string }
   | { tipo: 'regras/restaurar' }
   | { tipo: 'preferencias/salvar'; preferencias: Preferencias }
+  | { tipo: 'insight/salvar'; insight: Insight }
+  | { tipo: 'insight/recusar'; dia: DataISO; chave: string }
 
 /** Troca o item de mesmo id, ou acrescenta no fim. */
 function salvarItem<T extends { id: string }>(lista: T[], item: T): T[] {
@@ -97,5 +100,18 @@ export function dadosReducer(estado: Dados, acao: Acao): Dados {
       return { ...estado, regras: regrasPadrao() }
     case 'preferencias/salvar':
       return { ...estado, preferencias: acao.preferencias }
+    case 'insight/salvar': {
+      // Um por dia e um por semana (pela segunda-feira): gerar de novo substitui.
+      const novo: Insight = acao.insight.tipo === 'semana' ? { ...acao.insight, semana: inicioDaSemana(deISO(acao.insight.semana)) } : acao.insight
+      const chave = (i: Insight) => (i.tipo === 'dia' ? `dia:${i.dia}` : `semana:${i.semana}`)
+      return { ...estado, insights: [...estado.insights.filter((i) => chave(i) !== chave(novo)), novo] }
+    }
+    case 'insight/recusar':
+      return {
+        ...estado,
+        insights: estado.insights.map((i) =>
+          i.tipo === 'dia' && i.dia === acao.dia ? { ...i, sugestoes: i.sugestoes.map((s) => (s.chave === acao.chave ? { ...s, recusada: true } : s)) } : i,
+        ),
+      }
   }
 }
