@@ -652,6 +652,8 @@ T37 → T38 → T39
 
 #### T19: Consentimento da IA
 
+**Status**: ✅ Concluída
+
 **What**: `DialogConsentimento` com a lista do que é enviado (áudio incluído), o aviso do plano gratuito e "Concordo e ligar" / "Cancelar".
 **Where**: `src/features/ia/components/DialogConsentimento.tsx`
 **Depends on**: None
@@ -665,9 +667,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] O diálogo lista os itens da suposição "O que é enviado" e o aviso do plano gratuito
-- [ ] "Cancelar" fecha sem ligar; "Concordo e ligar" devolve o consentimento
-- [ ] Gate passa: build
+- [x] O diálogo lista os itens da suposição "O que é enviado" e o aviso do plano gratuito
+- [x] "Cancelar" fecha sem ligar; "Concordo e ligar" devolve o consentimento
+- [x] Gate passa: build
 
 **Tests**: none
 **Gate**: build

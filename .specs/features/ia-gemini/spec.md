@@ -260,8 +260,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Requirement ID | Story | Tasks | Status |
 | -------------- | ----- | ----- | ------ |
 | IACONF-01 | P1: Ligar a IA | T16, T18 | Implementing |
-| IACONF-02 | P1: Ligar a IA | T19 | In Tasks |
-| IACONF-03 | P1: Ligar a IA | T19 | In Tasks |
+| IACONF-02 | P1: Ligar a IA | T19 | Implementing |
+| IACONF-03 | P1: Ligar a IA | T19 | Implementing |
 | IACONF-04 | P1: Ligar a IA | T16 | Implementing |
 | IACONF-05 | P1: Ligar a IA | T16, T17 | Implementing |
 | IACONF-06 | P1: Ligar a IA | T16, T17 | Implementing |
