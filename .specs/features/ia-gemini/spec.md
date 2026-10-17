@@ -265,8 +265,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | IACONF-04 | P1: Ligar a IA | T16 | In Tasks |
 | IACONF-05 | P1: Ligar a IA | T16, T17 | In Tasks |
 | IACONF-06 | P1: Ligar a IA | T16, T17 | In Tasks |
-| IACONF-07 | P1: Ligar a IA | T15 | In Tasks |
-| IACONF-08 | P1: Ligar a IA | T15, T20 | In Tasks |
+| IACONF-07 | P1: Ligar a IA | T15 | Implementing |
+| IACONF-08 | P1: Ligar a IA | T15, T20 | Implementing |
 | IACONF-09 | P1: Ligar a IA | T16, T20 | In Tasks |
 | IACONF-10 | P1: Ligar a IA | T20 | In Tasks |
 | IACONF-11 | P1: Ligar a IA | T20, T22, T27 | In Tasks |

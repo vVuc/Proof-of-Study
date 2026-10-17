@@ -537,6 +537,8 @@ T37 → T38 → T39
 
 #### T15: Cofre da chave
 
+**Status**: ✅ Concluída
+
 **What**: Módulo `cofre` com o `keyring` 4 (`v1::Entry`, serviço `io.github.mizerski.proofofstudy`, usuário `gemini`) e o arquivo `ia-chave` com permissão `0600` quando não há Secret Service; começa por um spike que confirma o caminho e a API da crate.
 **Where**: `src-tauri/src/ia.rs`
 **Depends on**: None
@@ -550,10 +552,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] `final_da_chave` devolve só os 4 últimos caracteres (teste Rust)
-- [ ] Gravar, ler e apagar pelo arquivo funciona numa pasta temporária, com `0600` no Unix (teste Rust)
-- [ ] A chave não vai para nenhum `log::` (conferido no diff)
-- [ ] Gate passa: full
+- [x] `final_da_chave` devolve só os 4 últimos caracteres (teste Rust)
+- [x] Gravar, ler e apagar pelo arquivo funciona numa pasta temporária, com `0600` no Unix (teste Rust)
+- [x] A chave não vai para nenhum `log::` (conferido no diff)
+- [x] Gate passa: full
 
 **Tests**: unit
 **Gate**: full

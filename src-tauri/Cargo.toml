@@ -35,6 +35,8 @@ cpal = { version = "0.18", optional = true }
 sha2 = { version = "0.11", optional = true }
 # Cliente HTTP (rustls) das chamadas ao Gemini.
 ureq = "3"
+# Cofre do sistema para a chave do Gemini: Gerenciador de Credenciais no Windows, Secret Service no Linux.
+keyring = "4"
 
 [features]
 default = []
