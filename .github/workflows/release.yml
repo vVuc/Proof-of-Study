@@ -69,7 +69,7 @@ jobs:
                 '- **Outras distros:** o `.AppImage` (`chmod +x` e abrir).',
                 '- **Wayland:** a janela ativa só é lida em apps do XWayland. Para o registro completo, entre na sessão **X11** ("GNOME em Xorg", "Plasma (X11)").',
                 '',
-                'Com a sessão do dia aberta, o app lê só o **título da janela ativa** e o **nome do programa**. Nada de teclas, imagens da tela ou URL, e tudo fica só no seu computador. A voz do relato é transcrita no próprio PC; o único download é o modelo de voz, se você quiser usar.',
+                'Com a sessão do dia aberta, o app lê só o **título da janela ativa** e o **nome do programa**. Nada de teclas, imagens da tela ou URL, e tudo fica só no seu computador. A IA (Gemini) vem desligada: só com a sua chave e o seu consentimento o app manda ao Gemini o que a tela de consentimento lista, incluindo o áudio da fala, que ele transcreve ao vivo.',
               ].join('\n'),
             })
             return data.id
@@ -119,7 +119,7 @@ jobs:
           npm test
 
       - name: Testes do Rust
-        run: cargo test --manifest-path src-tauri/Cargo.toml --features voz
+        run: cargo test --manifest-path src-tauri/Cargo.toml
 
       # Compila e sobe os instaladores na release criada acima.
       - uses: tauri-apps/tauri-action@v0
@@ -127,7 +127,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           releaseId: ${{ needs.criar-release.outputs.id }}
-          args: --bundles ${{ matrix.pacotes }} --features voz
+          args: --bundles ${{ matrix.pacotes }}
 
   publicar:
     name: Publicar release

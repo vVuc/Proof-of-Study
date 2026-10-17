@@ -1046,6 +1046,8 @@ T37 → T38 → T39
 
 #### T32: CI e README sem a compilação `voz`
 
+**Status**: ✅ Concluída
+
 **What**: Tirar `--features voz` dos dois workflows e o trecho de CMake/LLVM do README, descrevendo a voz ao vivo e a IA.
 **Where**: `.github/workflows/build-teste.yml`
 **Depends on**: T31
@@ -1059,9 +1061,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Nenhum `--features voz` em `.github/workflows/` (`build-teste.yml` e `release.yml`)
-- [ ] O README descreve a IA com chave própria e a voz ao vivo
-- [ ] Gate passa: build
+- [x] Nenhum `--features voz` em `.github/workflows/` (`build-teste.yml` e `release.yml`)
+- [x] O README descreve a IA com chave própria e a voz ao vivo
+- [x] Gate passa: build
 
 **Tests**: none
 **Gate**: build

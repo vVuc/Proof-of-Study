@@ -69,11 +69,11 @@ jobs:
 
       - name: Testes e Clippy do Rust
         run: |
-          cargo test --manifest-path src-tauri/Cargo.toml --features voz
-          cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --features voz -- -D warnings
+          cargo test --manifest-path src-tauri/Cargo.toml
+          cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
       # O Tauri roda antes o "npm run build" (typecheck + Vite), definido em beforeBuildCommand.
-      - run: npm run desktop:build -- --bundles ${{ matrix.pacotes }} --features voz
+      - run: npm run desktop:build -- --bundles ${{ matrix.pacotes }}
 
       - uses: actions/upload-artifact@v4
         with:

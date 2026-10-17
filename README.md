@@ -2,7 +2,7 @@
 
 App desktop para Windows e Linux: um play no dia, e o app registra as janelas e liga cada trecho aos objetivos que você citou. No fim do dia, um relato (escrito ou falado) valida as horas no banco de horas, e a autoanálise mostra quando você rende e o que tira você do estudo.
 
-Uso pessoal, grátis, dados só no PC de cada pessoa (`%APPDATA%\io.github.mizerski.proofofstudy` no Windows, `~/.local/share/io.github.mizerski.proofofstudy` no Linux).
+Uso pessoal, grátis, dados só no PC de cada pessoa (`%APPDATA%\io.github.mizerski.proofofstudy` no Windows, `~/.local/share/io.github.mizerski.proofofstudy` no Linux). A IA (Gemini), desligada por padrão, usa a chave da própria pessoa e só envia dados depois do consentimento.
 
 ## Rodar
 
@@ -23,13 +23,9 @@ Precisa de Node 20+ e Rust. No Windows, com o toolchain MSVC e o WebView2 (que j
 sudo apt install libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf build-essential libasound2-dev
 ```
 
-A voz do relato (whisper.cpp) é um recurso de compilação à parte, ligado no CI e na release. Para compilar com ela, instale também o CMake e o LLVM (libclang; no Windows, `winget install LLVM.LLVM`) e rode:
+O `libasound2-dev` é o do microfone da voz ao vivo, que já entra em toda compilação.
 
-```bash
-npm run desktop -- --features voz
-```
-
-Testes: `npm test` (regras, atribuição, migração, insights) e `cargo test --manifest-path src-tauri/Cargo.toml` (sessão do dia, diário; com `--features voz`, também a voz).
+Testes: `npm test` (regras, atribuição, migração, insights, prompts e respostas da IA) e `cargo test --manifest-path src-tauri/Cargo.toml` (sessão do dia, diário, chamadas ao Gemini e protocolo da voz ao vivo).
 
 ## Versões
 
@@ -63,7 +59,8 @@ Fora das telas: o aviso "Hora do estudo" quando começa um item de estudo com ho
 - **Linux**: a leitura usa o X11 (`x11rb`). Numa sessão Wayland só aparecem os apps do XWayland, o tempo sem uso não é medido e o atalho global não funciona; para o registro completo, use a sessão X11. A bandeja precisa de suporte a AppIndicator (no GNOME, a extensão "AppIndicator").
 - **Atribuição** (`src/features/sessao/utils/classificacao.ts` e `resumo.ts`, a mesma ordem em `distracao` no Rust): primeiro os termos dos objetivos do dia e o nome e os termos das matérias no título (o tutorial de Blender no YouTube vira Blender), depois as regras (as de título antes das de app; a primeira que casa decide). **Janela sem regra conta como fora do estudo.** Estudo sem matéria vai para o objetivo do dia, se houver um só; com vários, fica "sem objetivo" até o relato.
 - **Banco de horas**: o estudo atribuído a cada matéria entra no banco nos dias com relato final com texto (até o fim do dia seguinte) ou nas sessões com anotação própria.
-- **Voz** (`voz.rs`): grava o microfone e transcreve com o Whisper (whisper.cpp) no próprio PC. O modelo (base, 60 MB, ou small, 190 MB) é baixado uma vez do Hugging Face, com consentimento, e conferido pelo SHA-256. O áudio é descartado depois da transcrição.
+- **IA com Gemini** (`ia.rs` e `src/features/ia/`): desligada por padrão. A pessoa informa a própria chave do Gemini (testada antes de salvar e guardada no cofre do sistema, fora do `dados.json`, do log e do diagnóstico), um texto "Sobre você" e concorda com o que é enviado. Com ela ligada, e só por clique, o relato final ganha o insight do dia com uma sugestão por grupo de janelas (a pessoa aceita ou recusa; nada muda sem confirmação) e o plano do dia vira objetivos de estudo e de trabalho. Anotações e imagens nunca são enviadas. No plano gratuito do Gemini, o Google pode usar o conteúdo para melhorar os produtos dele.
+- **Voz ao vivo** (`voz.rs`): com a IA ligada, o "Falar" grava o microfone e manda o áudio ao Gemini (`gemini-3.5-transcribe-live`, em português, com os nomes das matérias e os objetivos do dia como vocabulário) em pedaços de 100 ms, pelo WebSocket. O texto aparece no campo enquanto a pessoa fala, e cada gravação vai até 10 minutos. O áudio não vai para o disco, e nenhum modelo é baixado. Com a IA desligada, o relato é só texto.
 - **Dados**: `dados.json` com o `plugin-store` (reducer + Context em `src/store/`), formato versão 3. Ao abrir dados dos formatos 1 e 2, o app converte e guarda antes uma cópia (`dados.v2.bak.json`); dados de uma versão mais nova não são abertos. As imagens ficam em `imagens/`, mostradas pelo protocolo `asset`.
 - **Logs**: um evento JSON por linha, com rotação, na pasta de logs do app, sem títulos de janela nem relatos. "Exportar diagnóstico" (em Apps e sites) junta versão, sistema, tamanho dos arquivos e o fim do log num `.txt`.
 
@@ -71,4 +68,4 @@ Stack e design system seguem `finance-sheet/docs/tecnologias.md` e `design-syste
 
 ## Fora desta versão
 
-IA (local ou na nuvem) para insights e o resumo do dia, metas de habilidade com tópicos, integração com o Anki, extensão de navegador para a URL, sincronização entre PCs, recursos com amigos.
+Outros provedores de IA (ou IA local), insights automáticos, metas de habilidade com tópicos, integração com o Anki, extensão de navegador para a URL, sincronização entre PCs, recursos com amigos.
