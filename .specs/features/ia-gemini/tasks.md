@@ -566,6 +566,8 @@ T37 → T38 → T39
 
 #### T16: Comandos da IA no Tauri
 
+**Status**: ✅ Concluída
+
 **What**: `ia_configurar`, `ia_chave_salvar` (teste com `GET /v1beta/models?pageSize=1`), `ia_chave_estado`, `ia_chave_remover` e `ia_gerar` (60 s, `spawn_blocking`), registrados no `lib.rs`, com o log `ia.chamada` só com tipo, duração, resultado e tokens.
 **Where**: `src-tauri/src/ia.rs`
 **Depends on**: T14, T15
@@ -579,10 +581,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] `pode_chamar(ligada, chave)` recusa com `Desligada` e `SemChave` (testes Rust)
-- [ ] A chave só é guardada depois do teste aceito (lógica em função testada com um resultado de teste falso)
-- [ ] O evento de log não leva corpo, título, relato nem chave (teste da função que monta o evento)
-- [ ] Gate passa: build
+- [x] `pode_chamar(ligada, chave)` recusa com `Desligada` e `SemChave` (testes Rust)
+- [x] A chave só é guardada depois do teste aceito (lógica em função testada com um resultado de teste falso)
+- [x] O evento de log não leva corpo, título, relato nem chave (teste da função que monta o evento)
+- [x] Gate passa: build
 
 **Tests**: unit
 **Gate**: build

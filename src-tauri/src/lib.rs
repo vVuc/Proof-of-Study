@@ -133,6 +133,7 @@ pub fn run() {
         .manage(rastreador::Rastreador::new())
         .manage(lembretes::Lembretes::default())
         .manage(voz::Voz::default())
+        .manage(ia::IA::default())
         .invoke_handler(tauri::generate_handler![
             rastreador::sessao_configurar,
             rastreador::sessao_play,
@@ -157,6 +158,11 @@ pub fn run() {
             voz::voz_gravar,
             voz::voz_parar,
             voz::voz_cancelar,
+            ia::ia_configurar,
+            ia::ia_chave_estado,
+            ia::ia_chave_salvar,
+            ia::ia_chave_remover,
+            ia::ia_gerar,
             atalho_definir,
         ])
         // Fechar a janela só a esconde na bandeja: a sessão do dia e os lembretes continuam.

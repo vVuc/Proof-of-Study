@@ -259,15 +259,15 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 | Requirement ID | Story | Tasks | Status |
 | -------------- | ----- | ----- | ------ |
-| IACONF-01 | P1: Ligar a IA | T16, T18 | In Tasks |
+| IACONF-01 | P1: Ligar a IA | T16, T18 | Implementing |
 | IACONF-02 | P1: Ligar a IA | T19 | In Tasks |
 | IACONF-03 | P1: Ligar a IA | T19 | In Tasks |
-| IACONF-04 | P1: Ligar a IA | T16 | In Tasks |
-| IACONF-05 | P1: Ligar a IA | T16, T17 | In Tasks |
-| IACONF-06 | P1: Ligar a IA | T16, T17 | In Tasks |
+| IACONF-04 | P1: Ligar a IA | T16 | Implementing |
+| IACONF-05 | P1: Ligar a IA | T16, T17 | Implementing |
+| IACONF-06 | P1: Ligar a IA | T16, T17 | Implementing |
 | IACONF-07 | P1: Ligar a IA | T15 | Implementing |
 | IACONF-08 | P1: Ligar a IA | T15, T20 | Implementing |
-| IACONF-09 | P1: Ligar a IA | T16, T20 | In Tasks |
+| IACONF-09 | P1: Ligar a IA | T16, T20 | Implementing |
 | IACONF-10 | P1: Ligar a IA | T20 | In Tasks |
 | IACONF-11 | P1: Ligar a IA | T20, T22, T27 | In Tasks |
 | TRAB-01 | P1: Trabalho | T5, T6 | Implementing |
@@ -304,7 +304,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | IAERR-03 | P1: Falhas da IA | T14, T17 | Implementing |
 | IAERR-04 | P1: Falhas da IA | T14, T17 | Implementing |
 | IAERR-05 | P1: Falhas da IA | T17, T26 | In Tasks |
-| IAERR-06 | P1: Falhas da IA | T16 | In Tasks |
+| IAERR-06 | P1: Falhas da IA | T16 | Implementing |
 | VOZ-01 | P2: Voz ao vivo | T31, T35 | In Tasks |
 | VOZ-02 | P2: Voz ao vivo | T31, T34 | In Tasks |
 | VOZ-03 | P2: Voz ao vivo | T31 | In Tasks |

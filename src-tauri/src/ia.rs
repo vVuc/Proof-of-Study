@@ -2,11 +2,21 @@
 //! JSON que volta; aqui ficam o modelo, a chave e a chamada à Interactions API, com os erros traduzidos. A chave
 //! nunca vai para o log nem para as mensagens de erro.
 
+use std::path::PathBuf;
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
+
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use tauri::{AppHandle, Manager, State};
 
 /// Modelo das análises, fixo no código.
 pub const MODELO: &str = "gemini-3.8-flash";
+const URL_INTERACOES: &str = "https://generativelanguage.googleapis.com/v1beta/interactions";
+/// Lista um modelo só: confirma a chave sem gastar tokens.
+const URL_TESTE_DA_CHAVE: &str = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1";
+/// Tempo máximo de uma chamada, com a leitura da resposta.
+const LIMITE: Duration = Duration::from_secs(60);
 
 /// O que o front pede: o tipo (`dia`, `semana`, `plano` ou `teste`), a instrução do sistema, a entrada e o JSON Schema
 /// da resposta.
@@ -182,6 +192,207 @@ pub mod cofre {
     }
 }
 
+/// O que a tela de opções sabe da chave: se há uma, os 4 últimos caracteres e onde ela está.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EstadoChave {
+    pub salva: bool,
+    #[serde(rename = "final")]
+    pub final_da_chave: Option<String>,
+    pub cofre: Option<cofre::Cofre>,
+}
+
+fn estado_da_chave(chave: Option<&(String, cofre::Cofre)>) -> EstadoChave {
+    EstadoChave { salva: chave.is_some(), final_da_chave: chave.map(|(c, _)| final_da_chave(c)), cofre: chave.map(|(_, k)| *k) }
+}
+
+#[derive(Default)]
+struct Interno {
+    /// "Usar IA (Gemini)", como o front avisou. Desligada, nada chama o Gemini.
+    ligada: bool,
+    /// A chave guardada, lida do cofre na primeira vez (`None` = ainda não lida).
+    chave: Option<Option<(String, cofre::Cofre)>>,
+}
+
+#[derive(Default)]
+pub struct IA(Mutex<Interno>);
+
+/// Só chama o Gemini com a IA ligada e com a chave salva (IACONF-01). Devolve a chave da chamada.
+pub fn pode_chamar(ligada: bool, chave: Option<&str>) -> Result<String, ErroIA> {
+    if !ligada {
+        return Err(ErroIA::Desligada);
+    }
+    chave.map(str::to_owned).ok_or(ErroIA::SemChave)
+}
+
+/// Guarda a chave só depois que o Gemini a aceitou no teste (IACONF-04 a 06).
+pub fn salvar_se_aceita(
+    chave: &str,
+    testar: impl FnOnce(&str) -> Result<(), ErroIA>,
+    guardar: impl FnOnce(&str) -> Result<cofre::Cofre, ErroIA>,
+) -> Result<cofre::Cofre, ErroIA> {
+    testar(chave)?;
+    guardar(chave)
+}
+
+fn nome_do_erro(erro: &ErroIA) -> &'static str {
+    match erro {
+        ErroIA::Desligada => "Desligada",
+        ErroIA::SemChave => "SemChave",
+        ErroIA::Chave => "Chave",
+        ErroIA::Cota => "Cota",
+        ErroIA::Conexao => "Conexao",
+        ErroIA::Tempo => "Tempo",
+        ErroIA::Indisponivel => "Indisponivel",
+        ErroIA::Resposta => "Resposta",
+        ErroIA::Cofre { .. } => "Cofre",
+    }
+}
+
+/// O evento `ia.chamada`: o tipo, a duração, o resultado e os tokens. Nada do pedido, da resposta, do erro cru nem da
+/// chave (IAERR-06). Um tipo desconhecido vira `outro`, para nenhum texto do front entrar no log por ele.
+pub fn evento_da_chamada(tipo: &str, ms: u64, resultado: Result<Option<u64>, &ErroIA>) -> Value {
+    let tipo = match tipo {
+        "dia" | "semana" | "plano" | "teste" => tipo,
+        _ => "outro",
+    };
+    let (resultado, tokens) = match resultado {
+        Ok(tokens) => ("ok", tokens),
+        Err(erro) => (nome_do_erro(erro), None),
+    };
+    json!({ "tipo": tipo, "ms": ms, "resultado": resultado, "tokens": tokens })
+}
+
+fn registrar(evento: &Value) {
+    if evento["resultado"] == "ok" {
+        log::info!(target: "ia", "ia.chamada {evento}");
+    } else {
+        log::warn!(target: "ia", "ia.chamada {evento}");
+    }
+}
+
+fn ms_desde(inicio: Instant) -> u64 {
+    u64::try_from(inicio.elapsed().as_millis()).unwrap_or(u64::MAX)
+}
+
+/// Falha sem resposta HTTP: o limite de 60 s (IAERR-01) ou a falta de conexão (IAERR-04).
+pub fn erro_de_transporte(erro: &ureq::Error) -> ErroIA {
+    match erro {
+        ureq::Error::Timeout(_) => ErroIA::Tempo,
+        _ => ErroIA::Conexao,
+    }
+}
+
+fn agente() -> ureq::Agent {
+    ureq::Agent::config_builder().timeout_global(Some(LIMITE)).http_status_as_error(false).build().into()
+}
+
+/// O corpo de uma resposta 2xx; fora disso, o erro traduzido pelo status.
+fn ler_resposta(resultado: Result<ureq::http::Response<ureq::Body>, ureq::Error>) -> Result<String, ErroIA> {
+    let mut resposta = resultado.map_err(|e| erro_de_transporte(&e))?;
+    let status = resposta.status().as_u16();
+    let corpo = resposta.body_mut().read_to_string().map_err(|e| erro_de_transporte(&e))?;
+    if (200..300).contains(&status) { Ok(corpo) } else { Err(erro_do_status(status, &corpo)) }
+}
+
+fn testar_chave(chave: &str) -> Result<(), ErroIA> {
+    ler_resposta(agente().get(URL_TESTE_DA_CHAVE).header("x-goog-api-key", chave).call()).map(|_| ())
+}
+
+fn gerar(chave: &str, pedido: &PedidoIA) -> Result<RespostaIA, ErroIA> {
+    let corpo = corpo_da_interacao(pedido).to_string();
+    let texto = ler_resposta(
+        agente().post(URL_INTERACOES).header("x-goog-api-key", chave).header("content-type", "application/json").send(corpo),
+    )?;
+    let valor: Value = serde_json::from_str(&texto).map_err(|_| ErroIA::Resposta)?;
+    let texto = texto_da_interacao(&valor).ok_or(ErroIA::Resposta)?;
+    let tokens = valor.pointer("/usage/total_tokens").and_then(Value::as_u64);
+    Ok(RespostaIA { texto, modelo: MODELO.into(), tokens })
+}
+
+fn pasta(app: &AppHandle) -> Result<PathBuf, ErroIA> {
+    app.path().app_data_dir().map_err(|_| ErroIA::Cofre { detalhe: "pasta de dados do app indisponível".into() })
+}
+
+/// A chave guardada, lida do cofre só na primeira vez.
+fn chave_guardada(app: &AppHandle, e: &mut Interno) -> Option<(String, cofre::Cofre)> {
+    if e.chave.is_none() {
+        e.chave = Some(pasta(app).ok().and_then(|p| cofre::ler(&p)));
+    }
+    e.chave.clone().flatten()
+}
+
+fn travar(ia: &IA) -> Result<std::sync::MutexGuard<'_, Interno>, ErroIA> {
+    ia.0.lock().map_err(|_| ErroIA::Indisponivel)
+}
+
+/// O front avisa se a IA está ligada, ao abrir e a cada mudança.
+#[tauri::command]
+pub fn ia_configurar(ia: State<IA>, ligada: bool) {
+    if let Ok(mut e) = travar(&ia) {
+        e.ligada = ligada;
+    }
+}
+
+#[tauri::command]
+pub fn ia_chave_estado(app: AppHandle, ia: State<IA>) -> EstadoChave {
+    match travar(&ia) {
+        Ok(mut e) => estado_da_chave(chave_guardada(&app, &mut e).as_ref()),
+        Err(_) => estado_da_chave(None),
+    }
+}
+
+/// Testa a chave com o Gemini e só então a guarda.
+#[tauri::command]
+pub async fn ia_chave_salvar(app: AppHandle, ia: State<'_, IA>, chave: String) -> Result<EstadoChave, ErroIA> {
+    let chave = chave.trim().to_string();
+    let destino = pasta(&app)?;
+    let copia = chave.clone();
+    let cofre = tauri::async_runtime::spawn_blocking(move || {
+        salvar_se_aceita(
+            &copia,
+            |c| {
+                let inicio = Instant::now();
+                let teste = testar_chave(c);
+                registrar(&evento_da_chamada("teste", ms_desde(inicio), teste.as_ref().map(|()| None)));
+                teste
+            },
+            |c| cofre::guardar(&destino, c),
+        )
+    })
+    .await
+    .unwrap_or(Err(ErroIA::Resposta))?;
+    let guardada = (chave, cofre);
+    let estado = estado_da_chave(Some(&guardada));
+    travar(&ia)?.chave = Some(Some(guardada));
+    Ok(estado)
+}
+
+/// Apaga a chave e desliga a IA (IACONF-09).
+#[tauri::command]
+pub fn ia_chave_remover(app: AppHandle, ia: State<IA>) -> Result<(), ErroIA> {
+    cofre::apagar(&pasta(&app)?)?;
+    let mut e = travar(&ia)?;
+    e.chave = Some(None);
+    e.ligada = false;
+    Ok(())
+}
+
+/// Uma análise: o pedido do front vai ao Gemini com o modelo e a chave, e volta o texto JSON da resposta.
+#[tauri::command]
+pub async fn ia_gerar(app: AppHandle, ia: State<'_, IA>, pedido: PedidoIA) -> Result<RespostaIA, ErroIA> {
+    let chave = {
+        let mut e = travar(&ia)?;
+        let guardada = chave_guardada(&app, &mut e);
+        pode_chamar(e.ligada, guardada.as_ref().map(|(c, _)| c.as_str()))?
+    };
+    let tipo = pedido.tipo.clone();
+    let inicio = Instant::now();
+    let resultado = tauri::async_runtime::spawn_blocking(move || gerar(&chave, &pedido)).await.unwrap_or(Err(ErroIA::Resposta));
+    registrar(&evento_da_chamada(&tipo, ms_desde(inicio), resultado.as_ref().map(|r| r.tokens)));
+    resultado
+}
+
 #[cfg(test)]
 mod testes {
     use super::*;
@@ -259,5 +470,49 @@ mod testes {
         // Apagar de novo, sem o arquivo, não falha.
         assert_eq!(cofre::apagar_arquivo(&caminho), Ok(()));
         let _ = std::fs::remove_dir_all(pasta);
+    }
+
+    #[test]
+    fn so_chama_o_gemini_ligada_e_com_chave() {
+        assert_eq!(pode_chamar(false, Some(CHAVE_FALSA)), Err(ErroIA::Desligada));
+        assert_eq!(pode_chamar(true, None), Err(ErroIA::SemChave));
+        assert_eq!(pode_chamar(true, Some(CHAVE_FALSA)), Ok(CHAVE_FALSA.to_string()));
+    }
+
+    #[test]
+    fn a_chave_so_e_guardada_depois_do_teste_aceito() {
+        for recusa in [ErroIA::Chave, ErroIA::Conexao] {
+            let mut guardou = false;
+            let resultado = salvar_se_aceita(CHAVE_FALSA, |_| Err(recusa.clone()), |_| {
+                guardou = true;
+                Ok(cofre::Cofre::Sistema)
+            });
+            assert_eq!(resultado, Err(recusa));
+            assert!(!guardou);
+        }
+        let mut guardada = None;
+        let resultado = salvar_se_aceita(CHAVE_FALSA, |_| Ok(()), |c| {
+            guardada = Some(c.to_string());
+            Ok(cofre::Cofre::Arquivo)
+        });
+        assert_eq!(resultado, Ok(cofre::Cofre::Arquivo));
+        assert_eq!(guardada.as_deref(), Some(CHAVE_FALSA));
+    }
+
+    #[test]
+    fn evento_do_log_so_tem_tipo_duracao_resultado_e_tokens() {
+        assert_eq!(evento_da_chamada("dia", 1500, Ok(Some(1200))), json!({ "tipo": "dia", "ms": 1500, "resultado": "ok", "tokens": 1200 }));
+        let erro = ErroIA::Cofre { detalhe: "arquivo da chave: permission denied".into() };
+        assert_eq!(evento_da_chamada("teste", 300, Err(&erro)), json!({ "tipo": "teste", "ms": 300, "resultado": "Cofre", "tokens": null }));
+        // Nenhum texto vindo do front entra no log pelo tipo.
+        let estranho = evento_da_chamada("Gatinho - YouTube - Google Chrome", 10, Err(&ErroIA::Conexao));
+        assert_eq!(estranho, json!({ "tipo": "outro", "ms": 10, "resultado": "Conexao", "tokens": null }));
+    }
+
+    #[test]
+    fn falhas_sem_resposta_viram_tempo_ou_conexao() {
+        assert_eq!(erro_de_transporte(&ureq::Error::Timeout(ureq::Timeout::Global)), ErroIA::Tempo);
+        assert_eq!(erro_de_transporte(&ureq::Error::HostNotFound), ErroIA::Conexao);
+        assert_eq!(erro_de_transporte(&ureq::Error::ConnectionFailed), ErroIA::Conexao);
     }
 }
