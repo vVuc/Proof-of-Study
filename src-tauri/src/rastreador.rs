@@ -1140,11 +1140,13 @@ mod testes {
     }
 
     #[test]
-    fn a_borda_do_expediente_fecha_no_fim() {
-        // Um milissegundo antes do fim ainda é expediente; no instante do fim, não é mais (como em resumo.test.ts).
+    fn a_borda_do_expediente_abre_no_inicio_e_fecha_no_fim() {
+        // No instante do começo já é expediente; um milissegundo antes, não. No fim, o contrário (como em resumo.test.ts).
         let fim = nove() + 60 * MIN;
         let mut cfg = config();
         cfg.expediente = vec![[nove(), fim]];
+        assert!(em_expediente(&cfg, nove()));
+        assert!(!em_expediente(&cfg, nove() - 1));
         assert!(em_expediente(&cfg, fim - 1));
         assert!(!em_expediente(&cfg, fim));
     }
