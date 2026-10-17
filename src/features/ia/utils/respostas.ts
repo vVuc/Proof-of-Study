@@ -1,5 +1,5 @@
 import type { DataISO } from '@/shared/lib/datas'
-import type { Ajuste, Dados, Objetivo, SugestaoIA } from '@/store/model/dados'
+import type { Ajuste, Dados, InsightSemana, Objetivo, SugestaoIA } from '@/store/model/dados'
 import { nomeDoObjetivo, objetivosDoDia } from '@/features/hoje/utils/dia'
 import { normalizar } from '@/features/sessao/utils/classificacao'
 import { TIPOS_DA_SUGESTAO, type MapaIds } from './prompts'
@@ -91,4 +91,15 @@ export function lerRespostaDoPlano(resposta: string, mapa: MapaIds, dados: Dados
     ordem++
   }
   return novos
+}
+
+/**
+ * A resposta do insight da semana: as três partes. `null` se o JSON não fechar ou se faltar alguma parte (a tela mostra
+ * "A resposta do Gemini veio incompleta").
+ */
+export function lerRespostaDaSemana(texto: string): InsightSemana['partes'] | null {
+  const json = lerJSON(texto)
+  if (!ehObjeto(json)) return null
+  const [comoFoi, padroes, proximaSemana] = [limpo(json.comoFoi), limpo(json.padroes), limpo(json.proximaSemana)]
+  return comoFoi && padroes && proximaSemana ? { comoFoi, padroes, proximaSemana } : null
 }

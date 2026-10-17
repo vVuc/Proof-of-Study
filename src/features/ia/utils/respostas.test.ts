@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { dadosIniciais, type Dados } from '@/store/model/dados'
 import type { MapaIds } from './prompts'
-import { lerRespostaDoDia, lerRespostaDoPlano } from './respostas'
+import { lerRespostaDaSemana, lerRespostaDoDia, lerRespostaDoPlano } from './respostas'
 
 const mapa: MapaIds = {
   grupos: { g1: 'regra:vscode', g2: 'site:youtube', g3: 'app:slack' },
@@ -127,5 +127,28 @@ describe('lerRespostaDoPlano (PLANO-02 a PLANO-04)', () => {
 
   it('JSON quebrado dá null', () => {
     expect(lerRespostaDoPlano('{"objetivos": [', mapaDoPlano, dados, DIA)).toBeNull()
+  })
+})
+
+describe('lerRespostaDaSemana (INSS-03)', () => {
+  const partes = { comoFoi: 'Semana com 8h de estudo e 30h de trabalho.', padroes: 'O foco aparece à noite, depois do expediente.', proximaSemana: 'Reservar duas noites para Rust.' }
+  const resposta = (extra: Record<string, unknown> = partes) => JSON.stringify(extra)
+
+  it('JSON com as três partes dá as partes', () => {
+    expect(lerRespostaDaSemana(resposta())).toEqual(partes)
+  })
+
+  it('parte faltando, vazia ou que não é texto dá null', () => {
+    for (const parte of ['comoFoi', 'padroes', 'proximaSemana'] as const) {
+      const { [parte]: _, ...semAParte } = partes
+      expect(lerRespostaDaSemana(resposta(semAParte))).toBeNull()
+      expect(lerRespostaDaSemana(resposta({ ...partes, [parte]: '   ' }))).toBeNull()
+      expect(lerRespostaDaSemana(resposta({ ...partes, [parte]: 42 }))).toBeNull()
+    }
+  })
+
+  it('JSON quebrado ou que não é um objeto dá null', () => {
+    expect(lerRespostaDaSemana('{"comoFoi": "Semana com')).toBeNull()
+    expect(lerRespostaDaSemana('[]')).toBeNull()
   })
 })

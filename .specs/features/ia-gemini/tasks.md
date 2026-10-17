@@ -1221,6 +1221,8 @@ T37 → T38 → T39
 
 #### T38: Leitura da resposta da semana
 
+**Status**: ✅ Concluída
+
 **What**: `lerRespostaDaSemana(texto)` devolve as três partes ou `null`.
 **Where**: `src/features/ia/utils/respostas.ts`
 **Depends on**: T37
@@ -1234,10 +1236,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] JSON com as três partes dá as partes (teste)
-- [ ] Parte faltando ou JSON quebrado dá `null` (testes)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 2
+- [x] JSON com as três partes dá as partes (teste)
+- [x] Parte faltando ou JSON quebrado dá `null` (testes)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 2
 
 **Tests**: unit
 **Gate**: quick
