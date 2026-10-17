@@ -624,6 +624,8 @@ T37 → T38 → T39
 
 #### T18: Hook da IA
 
+**Status**: ✅ Concluída
+
 **What**: `useIA` com `ligada` (preferência + chave), a sincronização de `ia_configurar`, uma chamada por tipo de cada vez e o descarte da resposta se a IA desligar no meio.
 **Where**: `src/features/ia/hooks/useIA.ts`
 **Depends on**: T17
@@ -637,9 +639,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Com a preferência desligada, `gerar` não chama o Rust
-- [ ] Duas chamadas seguidas do mesmo tipo resultam em uma só
-- [ ] Gate passa: build
+- [x] Com a preferência desligada, `gerar` não chama o Rust
+- [x] Duas chamadas seguidas do mesmo tipo resultam em uma só
+- [x] Gate passa: build
 
 **Tests**: none
 **Gate**: build
