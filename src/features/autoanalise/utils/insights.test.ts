@@ -5,6 +5,7 @@ import {
   blocosDeFoco,
   focoPorHora,
   focoPorHumor,
+  linhasPorDia,
   mediana,
   principaisDistracoes,
   temposAteDistrair,
@@ -26,6 +27,10 @@ describe('blocosDeFoco', () => {
   it('estudo seguido vira um bloco; fora encerra; ignorado não encerra nem soma', () => {
     const blocos = blocosDeFoco([t(0, 20, 'estudo'), t(20, 5, 'ignorar'), t(25, 10, 'estudo'), t(35, 5, 'fora'), t(40, 15, 'estudo')])
     expect(blocos).toEqual([30 * MIN, 15 * MIN])
+  })
+
+  it('trabalho entre dois trechos de estudo separa dois blocos de foco (TRAB-05)', () => {
+    expect(blocosDeFoco([t(0, 20, 'estudo'), t(20, 10, 'trabalho'), t(30, 15, 'estudo')])).toEqual([20 * MIN, 15 * MIN])
   })
 
   it('um buraco no registro (pausa) encerra o bloco', () => {
@@ -57,7 +62,21 @@ describe('focoPorHora', () => {
   })
 })
 
+describe('focoPorHora com trabalho', () => {
+  it('o trecho de trabalho não entra em focoMs nem em foraMs (TRAB-05)', () => {
+    // Estudo das 9h40 às 10h20 e trabalho das 10h20 às 10h40.
+    const terca = focoPorHora([t(40, 40, 'estudo'), t(80, 20, 'trabalho')])[2]
+    expect(terca[9]).toEqual({ focoMs: 20 * MIN, foraMs: 0 })
+    expect(terca[10]).toEqual({ focoMs: 20 * MIN, foraMs: 0 })
+  })
+})
+
 describe('principaisDistracoes', () => {
+  it('o trabalho não aparece entre as distrações (TRAB-05)', () => {
+    const lista = principaisDistracoes([t(0, 30, 'trabalho', 'Slack'), t(30, 5, 'fora', 'YouTube')])
+    expect(lista.map((d) => d.rotulo)).toEqual(['YouTube'])
+  })
+
   it('soma por grupo, sem a ausência, do maior para o menor', () => {
     const lista = principaisDistracoes([t(0, 10, 'fora', 'YouTube'), t(10, 30, 'fora', 'Ausente do PC'), t(60, 20, 'fora', 'Discord'), t(90, 5, 'fora', 'YouTube')])
     expect(lista.map((d) => [d.rotulo, d.ms / MIN])).toEqual([
@@ -65,6 +84,32 @@ describe('principaisDistracoes', () => {
       ['YouTube', 15],
     ])
     expect(lista[0].horaPico).toBe(10)
+  })
+})
+
+describe('linhasPorDia', () => {
+  it('traz o tempo de trabalho de cada dia, somando as sessões do dia (TRAB-05)', () => {
+    const sessao = (id: string, dia: string, trabalhoMs: number): Sessao => ({
+      id,
+      dia,
+      inicio: nove,
+      fim: nove + 60 * MIN,
+      pausas: [],
+      trechos: [],
+      ajustes: {},
+      focoMs: 0,
+      foraMs: 0,
+      trabalhoMs,
+      focoPorMateria: {},
+      semObjetivoMs: 0,
+      anotacao: '',
+      imagens: [],
+    })
+    const linhas = linhasPorDia(dadosIniciais(), [sessao('a', '2026-10-20', 30 * MIN), sessao('b', '2026-10-20', 15 * MIN), sessao('c', '2026-10-21', 0)])
+    expect(linhas.map((l) => [l.dia, l.trabalhoMs])).toEqual([
+      ['2026-10-20', 45 * MIN],
+      ['2026-10-21', 0],
+    ])
   })
 })
 
@@ -80,6 +125,7 @@ describe('mediana e humor', () => {
       dia: '2026-10-20',
       focoMs,
       foraMs: 0,
+      trabalhoMs: 0,
       registradoMs: focoMs,
       humor,
       planejadasComTempo: [],

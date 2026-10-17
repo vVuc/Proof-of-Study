@@ -39,11 +39,11 @@ export interface CelulaHora {
   foraMs: number
 }
 
-/** Foco e fora por dia da semana (0 = domingo) e hora do dia, para o mapa "quando você rende". */
+/** Foco e fora por dia da semana (0 = domingo) e hora do dia, para o mapa "quando você rende". Trabalho e ignorado ficam de fora. */
 export function focoPorHora(trechos: TrechoClassificado[]): CelulaHora[][] {
   const mapa = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => ({ focoMs: 0, foraMs: 0 })))
   for (const t of trechos) {
-    if (t.tipo === 'ignorar') continue
+    if (t.tipo === 'ignorar' || t.tipo === 'trabalho') continue
     // Um trecho que atravessa a hora cheia é dividido entre as horas.
     for (let inicio = t.inicio; inicio < t.fim; ) {
       const data = new Date(inicio)
@@ -81,7 +81,10 @@ export function principaisDistracoes(trechos: TrechoClassificado[], limite = 5):
     .slice(0, limite)
 }
 
-/** Durações dos blocos de foco contínuo: estudo seguido, até uma distração, uma pausa ou um buraco no registro. */
+/**
+ * Durações dos blocos de foco contínuo: estudo seguido, até uma distração, uma troca para trabalho, uma pausa ou um
+ * buraco no registro.
+ */
 export function blocosDeFoco(trechos: TrechoClassificado[]): number[] {
   const blocos: number[] = []
   let atual = 0
@@ -94,7 +97,7 @@ export function blocosDeFoco(trechos: TrechoClassificado[]): number[] {
     // Um buraco no registro (pausa, captura parada) encerra o bloco; janela ignorada não encerra nem soma.
     if (t.inicio - ultimoFim > EMENDA_MS) fechar()
     if (t.tipo === 'estudo') atual += t.fim - t.inicio
-    else if (t.tipo === 'fora') fechar()
+    else if (t.tipo === 'fora' || t.tipo === 'trabalho') fechar()
     ultimoFim = t.fim
   }
   fechar()
@@ -145,7 +148,9 @@ export interface LinhaDoDia {
   /** Estudo efetivo (o que foi estudo de fato). */
   focoMs: number
   foraMs: number
-  /** Todo o tempo registrado (estudo, fora e ignorado). */
+  /** Tempo de trabalho do dia, à parte do estudo e do fora. */
+  trabalhoMs: number
+  /** Todo o tempo registrado (estudo, trabalho, fora e ignorado). */
   registradoMs: number
   humor?: number
   /** Matérias planejadas (objetivos do dia) que receberam estudo, e as que não receberam. */
@@ -166,11 +171,13 @@ export function linhasPorDia(dados: Dados, sessoes: Sessao[]): LinhaDoDia[] {
     const estudadas = Object.keys(porMateria).filter((id) => porMateria[id] >= MIN)
     const focoMs = doDia.reduce((s, x) => s + x.focoMs, 0)
     const foraMs = doDia.reduce((s, x) => s + x.foraMs, 0)
+    const trabalhoMs = doDia.reduce((s, x) => s + x.trabalhoMs, 0)
     const registradoMs = doDia.reduce((s, x) => s + x.trechos.reduce((t, y) => t + (y.fim - y.inicio), 0), 0)
     return {
       dia,
       focoMs,
       foraMs,
+      trabalhoMs,
       registradoMs,
       humor: relatoDoDia(dados.relatos, dia, 'final')?.humor,
       planejadasComTempo: planejadas.filter((id) => estudadas.includes(id)),

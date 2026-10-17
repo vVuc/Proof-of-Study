@@ -209,6 +209,8 @@ T37 → T38 → T39
 
 #### T4: Trabalho na autoanálise
 
+**Status**: ✅ Concluída
+
 **What**: Em `insights.ts`, o trabalho fica fora do mapa de foco, das distrações e do tempo até distrair, encerra um bloco de foco, e `LinhaDoDia` ganha `trabalhoMs`.
 **Where**: `src/features/autoanalise/utils/insights.ts`
 **Depends on**: T1
@@ -222,12 +224,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Trecho de trabalho não entra em `focoMs` nem `foraMs` do mapa (teste)
-- [ ] Trabalho não aparece em `principaisDistracoes` (teste)
-- [ ] Trabalho entre dois trechos de estudo separa dois blocos de foco (teste)
-- [ ] `linhasPorDia` traz `trabalhoMs` do dia (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 4
+- [x] Trecho de trabalho não entra em `focoMs` nem `foraMs` do mapa (teste)
+- [x] Trabalho não aparece em `principaisDistracoes` (teste)
+- [x] Trabalho entre dois trechos de estudo separa dois blocos de foco (teste)
+- [x] `linhasPorDia` traz `trabalhoMs` do dia (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 4
 
 **Tests**: unit
 **Gate**: quick
