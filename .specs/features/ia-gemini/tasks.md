@@ -1250,6 +1250,8 @@ T37 → T38 → T39
 
 #### T39: Insight da semana na Autoanálise
 
+**Status**: ✅ Concluída
+
 **What**: `semanaPadrao(hoje)` e `semanaTemRegistros(dados, semana)` em `semana.ts`, e o `InsightDaSemana` na `AutoanalisePage` com a escolha da semana, "Analisar a semana", as três partes, "Gerar de novo" e o estado vazio.
 **Where**: `src/features/ia/components/InsightDaSemana.tsx`
 **Depends on**: T38, T24, T18
@@ -1263,11 +1265,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] `semanaPadrao` dá a segunda-feira da última semana completa, inclusive num domingo e numa segunda (testes em `semana.test.ts`)
-- [ ] `semanaTemRegistros` é falso sem sessão nem relato (teste)
-- [ ] Semana vazia mostra o botão desabilitado com "Sem dias registrados nesta semana"
-- [ ] Gate passa: build (última da feature)
-- [ ] Contagem do front ≥ anterior + 3
+- [x] `semanaPadrao` dá a segunda-feira da última semana completa, inclusive num domingo e numa segunda (testes em `semana.test.ts`)
+- [x] `semanaTemRegistros` é falso sem sessão nem relato (teste)
+- [x] Semana vazia mostra o botão desabilitado com "Sem dias registrados nesta semana"
+- [x] Gate passa: build (última da feature)
+- [x] Contagem do front ≥ anterior + 3
 
 **Tests**: unit
 **Gate**: build

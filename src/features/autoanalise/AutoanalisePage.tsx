@@ -6,6 +6,7 @@ import { deISO, inicioDaSemana, somarDias, type DataISO } from '@/shared/lib/dat
 import { FORMA_PAGINA } from '@/shared/lib/formas'
 import { useDados } from '@/store/context/dados-context'
 import { evolucao } from '@/features/banco/utils/banco'
+import { InsightDaSemana } from '@/features/ia/components/InsightDaSemana'
 import { useSessao } from '@/features/sessao/context/sessao-context'
 import { CartoesRitmo } from './components/CartoesRitmo'
 import { DiaADia } from './components/DiaADia'
@@ -56,6 +57,8 @@ export function AutoanalisePage() {
           />
         }
       />
+
+      <InsightDaSemana hoje={hoje} />
 
       {analise.dias === 0 ? (
         <EstadoVazio titulo="Ainda sem dias para analisar" descricao="Os padrões aparecem depois dos primeiros dias com a sessão rodando." />
