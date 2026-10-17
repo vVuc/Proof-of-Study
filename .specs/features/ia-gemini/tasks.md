@@ -1074,6 +1074,8 @@ T37 → T38 → T39
 
 #### T33: Apagar os modelos do Whisper
 
+**Status**: ✅ Concluída
+
 **What**: `apagar_modelos_antigos(pasta)` no `setup`, que remove a pasta dos modelos se existir e registra `voz.modelos_apagados`.
 **Where**: `src-tauri/src/lib.rs`
 **Depends on**: T31
@@ -1087,9 +1089,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Numa pasta temporária com um modelo falso, a função apaga a pasta (teste Rust)
-- [ ] Sem a pasta, a função não falha (teste Rust)
-- [ ] Gate passa: full
+- [x] Numa pasta temporária com um modelo falso, a função apaga a pasta (teste Rust)
+- [x] Sem a pasta, a função não falha (teste Rust)
+- [x] Gate passa: full
 
 **Tests**: unit
 **Gate**: full

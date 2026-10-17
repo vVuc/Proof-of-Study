@@ -6,6 +6,7 @@ mod lembretes;
 mod rastreador;
 mod voz;
 
+use std::path::Path;
 use std::time::Duration;
 
 use tauri::menu::{Menu, MenuItem};
@@ -85,6 +86,15 @@ fn atalho_definir(app: AppHandle, teclas: Option<String>) -> Result<(), String> 
         atalhos.register(teclas.as_str()).map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+/// Apaga a pasta dos modelos do Whisper, que a voz ao vivo não usa mais (VOZ-10). Devolve se havia o que apagar.
+fn apagar_modelos_antigos(pasta: &Path) -> std::io::Result<bool> {
+    match std::fs::remove_dir_all(pasta) {
+        Ok(()) => Ok(true),
+        Err(erro) if erro.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(erro) => Err(erro),
+    }
 }
 
 /// Log em arquivo, com rotação, um evento JSON por linha. Em debug, também no terminal.
@@ -175,10 +185,38 @@ pub fn run() {
             // Recupera a sessão do dia antes do relógio começar.
             let diario = app.path().app_data_dir()?.join("sessao-ativa.json");
             app.state::<rastreador::Rastreador>().carregar(diario);
+            match apagar_modelos_antigos(&app.path().app_data_dir()?.join("modelos")) {
+                Ok(true) => log::info!("voz.modelos_apagados"),
+                Ok(false) => {}
+                Err(erro) => log::warn!("voz: a pasta dos modelos antigos não foi apagada ({})", erro.kind()),
+            }
             criar_bandeja(app.handle())?;
             iniciar_relogio(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod testes {
+    use super::*;
+
+    #[test]
+    fn apaga_a_pasta_dos_modelos_do_whisper() {
+        let base = std::env::temp_dir().join(format!("pos-teste-modelos-{}", std::process::id()));
+        let pasta = base.join("modelos");
+        std::fs::create_dir_all(&pasta).unwrap();
+        std::fs::write(pasta.join("ggml-base-q5_1.bin"), b"modelo falso").unwrap();
+        assert!(apagar_modelos_antigos(&pasta).unwrap());
+        assert!(!pasta.exists());
+        let _ = std::fs::remove_dir_all(base);
+    }
+
+    #[test]
+    fn sem_a_pasta_dos_modelos_nada_falha() {
+        let pasta = std::env::temp_dir().join(format!("pos-teste-sem-modelos-{}", std::process::id())).join("modelos");
+        assert!(!pasta.exists());
+        assert_eq!(apagar_modelos_antigos(&pasta).ok(), Some(false));
+    }
 }

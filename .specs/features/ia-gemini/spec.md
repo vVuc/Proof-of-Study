@@ -314,7 +314,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | VOZ-07 | P2: Voz ao vivo | T31, T35 | Implementing |
 | VOZ-08 | P2: Voz ao vivo | T31 | Implementing |
 | VOZ-09 | P2: Voz ao vivo | T31, T32, T35, T36 | Implementing |
-| VOZ-10 | P2: Voz ao vivo | T33 | In Tasks |
+| VOZ-10 | P2: Voz ao vivo | T33 | Implementing |
 | PLANO-01 | P2: Plano pela IA | T27, T29 | Implementing |
 | PLANO-02 | P2: Plano pela IA | T28 | Implementing |
 | PLANO-03 | P2: Plano pela IA | T28 | Implementing |
