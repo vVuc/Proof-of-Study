@@ -1131,6 +1131,8 @@ T37 → T38 → T39
 
 #### T35: Campo do relato com a voz ao vivo
 
+**Status**: ✅ Concluída
+
 **What**: `CampoRelato` mostra o texto ao vivo, sem o fluxo de download, com "Falar" desabilitado e "Ligue a IA nas opções para falar." quando a IA está desligada, e as mensagens de microfone e de conexão.
 **Where**: `src/features/relatos/components/CampoRelato.tsx`
 **Depends on**: T34
@@ -1144,10 +1146,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] O texto parcial aparece no campo durante a fala e fica editável depois
-- [ ] Com a IA desligada, o botão aparece desabilitado com a mensagem exata
-- [ ] Nenhum texto de download ou de modelo sobra na tela
-- [ ] Gate passa: build
+- [x] O texto parcial aparece no campo durante a fala e fica editável depois
+- [x] Com a IA desligada, o botão aparece desabilitado com a mensagem exata
+- [x] Nenhum texto de download ou de modelo sobra na tela
+- [x] Gate passa: build
 
 **Tests**: none
 **Gate**: build

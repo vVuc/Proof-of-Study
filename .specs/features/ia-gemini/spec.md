@@ -310,7 +310,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | VOZ-03 | P2: Voz ao vivo | T31 | Implementing |
 | VOZ-04 | P2: Voz ao vivo | T30 | Implementing |
 | VOZ-05 | P2: Voz ao vivo | T31, T34 | Implementing |
-| VOZ-06 | P2: Voz ao vivo | T35 | In Tasks |
+| VOZ-06 | P2: Voz ao vivo | T35 | Implementing |
 | VOZ-07 | P2: Voz ao vivo | T31, T35 | Implementing |
 | VOZ-08 | P2: Voz ao vivo | T31 | Implementing |
 | VOZ-09 | P2: Voz ao vivo | T31, T32, T35, T36 | Implementing |

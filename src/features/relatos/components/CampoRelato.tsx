@@ -14,8 +14,9 @@ interface CampoRelatoProps {
 }
 
 /**
- * Texto do relato, com o microfone ao lado. A fala é transcrita no PC e entra no campo, editável. Sem modelo,
- * o primeiro clique pede para baixar (com o tamanho e a origem). Sem voz, o campo de texto continua.
+ * Texto do relato, com o microfone ao lado. Com a IA ligada, o Gemini transcreve a fala ao vivo: o texto aparece no
+ * campo enquanto a pessoa fala e fica editável quando a gravação acaba. Com a IA desligada, o "Falar" fica desabilitado
+ * e o campo de texto continua.
  */
 export function CampoRelato({ valor, onChange, placeholder, rotulo, linhas = 4 }: CampoRelatoProps) {
   const voz = useVoz(valor, (texto) => onChange(texto, 'voz'))
@@ -27,6 +28,8 @@ export function CampoRelato({ valor, onChange, placeholder, rotulo, linhas = 4 }
         <textarea
           value={valor}
           onChange={(e) => onChange(e.target.value, 'texto')}
+          // Durante a fala, o texto ao vivo é reescrito a cada trecho; a edição volta quando a gravação acaba.
+          readOnly={voz.gravando}
           rows={linhas}
           placeholder={placeholder}
           className="resize-y border-2 border-input bg-card p-3 text-sm leading-normal outline-none focus-visible:shadow-[3px_3px_0_0_var(--ring)]"
@@ -37,7 +40,7 @@ export function CampoRelato({ valor, onChange, placeholder, rotulo, linhas = 4 }
           {voz.gravando ? (
             <Button variant="destructive" className={cn(BOTAO, 'h-8 px-3')} disabled={voz.parando} onClick={() => void voz.parar()}>
               <span aria-hidden className="size-2 animate-pulse rounded-full bg-current" />
-              Parar e transcrever
+              Parar
             </Button>
           ) : (
             <Button variant="outline" className={cn(BOTAO, 'h-8 px-3')} disabled={!voz.disponivel} onClick={() => void voz.falar()}>
@@ -45,8 +48,13 @@ export function CampoRelato({ valor, onChange, placeholder, rotulo, linhas = 4 }
               Falar
             </Button>
           )}
-          {voz.gravando && <span className="text-muted-foreground">Gravando. O áudio é apagado depois da transcrição.</span>}
-          {voz.erro && <span className="text-destructive">Voz indisponível ({voz.erro}). Escreva no campo acima.</span>}
+          {!voz.disponivel && !voz.gravando && <span className="text-muted-foreground">Ligue a IA nas opções para falar.</span>}
+          {voz.gravando && (
+            <span className="text-muted-foreground">
+              {voz.parando ? 'Fechando o texto…' : 'Gravando. O texto aparece no campo enquanto você fala; o áudio não fica salvo.'}
+            </span>
+          )}
+          {voz.erro && <span className="text-destructive">{voz.erro}</span>}
         </div>
       )}
     </div>
