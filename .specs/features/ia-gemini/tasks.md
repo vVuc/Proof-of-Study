@@ -508,6 +508,8 @@ T37 → T38 → T39
 
 #### T14: Pedido, resposta e erros da Interactions API
 
+**Status**: ✅ Concluída
+
 **What**: `ia.rs` com `PedidoIA`, `RespostaIA`, `ErroIA` e as funções puras `corpo_da_interacao` (modelo `gemini-3.8-flash`, `system_instruction`, `input`, `response_format` com o schema e `store: false`), `texto_da_interacao` (texto em `steps[type=model_output].content[type=text]`) e `erro_do_status`; o `ureq` deixa de ser opcional.
 **Where**: `src-tauri/src/ia.rs`
 **Depends on**: None
@@ -521,10 +523,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] O corpo tem o modelo, `store: false` e `response_format` `{ type: "text", mime_type: "application/json", schema }` (teste Rust)
-- [ ] O texto sai de uma resposta com `steps` e falta numa sem `model_output` (testes Rust)
-- [ ] 401, 403 e 400 com "API key" → `Chave`; 429 → `Cota`; 503 → `Indisponivel` (testes Rust)
-- [ ] Gate passa: full
+- [x] O corpo tem o modelo, `store: false` e `response_format` `{ type: "text", mime_type: "application/json", schema }` (teste Rust)
+- [x] O texto sai de uma resposta com `steps` e falta numa sem `model_output` (testes Rust)
+- [x] 401, 403 e 400 com "API key" → `Chave`; 429 → `Cota`; 503 → `Indisponivel` (testes Rust)
+- [x] Gate passa: full
 
 **Tests**: unit
 **Gate**: full

@@ -1,4 +1,5 @@
 mod diagnostico;
+mod ia;
 mod imagens;
 mod janela;
 mod lembretes;

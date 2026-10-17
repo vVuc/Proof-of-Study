@@ -299,10 +299,10 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | INSD-11 | P1: Insight do dia | T24, T26 | In Tasks |
 | INSD-12 | P1: Insight do dia | T21 | In Tasks |
 | INSD-13 | P1: Insight do dia | T23 | In Tasks |
-| IAERR-01 | P1: Falhas da IA | T14, T16, T17 | In Tasks |
-| IAERR-02 | P1: Falhas da IA | T14, T17 | In Tasks |
-| IAERR-03 | P1: Falhas da IA | T14, T17 | In Tasks |
-| IAERR-04 | P1: Falhas da IA | T14, T17 | In Tasks |
+| IAERR-01 | P1: Falhas da IA | T14, T16, T17 | Implementing |
+| IAERR-02 | P1: Falhas da IA | T14, T17 | Implementing |
+| IAERR-03 | P1: Falhas da IA | T14, T17 | Implementing |
+| IAERR-04 | P1: Falhas da IA | T14, T17 | Implementing |
 | IAERR-05 | P1: Falhas da IA | T17, T26 | In Tasks |
 | IAERR-06 | P1: Falhas da IA | T16 | In Tasks |
 | VOZ-01 | P2: Voz ao vivo | T31, T35 | In Tasks |
