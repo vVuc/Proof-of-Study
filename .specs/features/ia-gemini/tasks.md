@@ -322,6 +322,8 @@ T37 → T38 → T39
 
 #### T8: Objetivo manual de estudo ou de trabalho
 
+**Status**: ✅ Concluída
+
 **What**: O "adicionar objetivo" do `CartaoObjetivos` escolhe Estudo ou Trabalho (padrão Estudo), e os objetivos de trabalho mostram o tempo recebido com o rótulo do tipo.
 **Where**: `src/features/hoje/components/CartaoObjetivos.tsx`
 **Depends on**: T2, T3
@@ -335,9 +337,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Um objetivo criado como Trabalho grava `tipo: 'trabalho'`; sem escolha, grava estudo
-- [ ] O tempo ligado ao objetivo de trabalho aparece nele na tela Hoje
-- [ ] Gate passa: build (última da fase)
+- [x] Um objetivo criado como Trabalho grava `tipo: 'trabalho'`; sem escolha, grava estudo
+- [x] O tempo ligado ao objetivo de trabalho aparece nele na tela Hoje
+- [x] Gate passa: build (última da fase)
 
 **Tests**: none
 **Gate**: build

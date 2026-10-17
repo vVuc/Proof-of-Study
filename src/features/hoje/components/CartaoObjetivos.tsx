@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Ajuda } from '@/shared/components/Ajuda'
 import { CabecalhoCard } from '@/shared/components/CabecalhoCard'
+import { ControleSegmentado, type OpcaoSegmentada } from '@/shared/components/ControleSegmentado'
 import { PontoCor } from '@/shared/components/PontoCor'
 import { formatarDuracao, type DataISO } from '@/shared/lib/datas'
 import { BOTAO, CAMPO, CARTAO, ROTULO } from '@/shared/lib/estilos'
@@ -9,10 +10,20 @@ import { Button } from '@/shared/ui/button'
 import { X } from '@/shared/ui/icones'
 import { Input } from '@/shared/ui/input'
 import { useDados } from '@/store/context/dados-context'
+import type { Objetivo } from '@/store/model/dados'
+import { COR_TIPO } from '@/features/sessao/components/partes'
 import { useResumoDoDia } from '@/features/sessao/hooks/useResumoDoDia'
+import { ROTULO_TIPO } from '@/features/sessao/utils/classificacao'
 import { nomeDoObjetivo, objetivosDoDia } from '../utils/dia'
 
 const ORIGEM = { rotina: 'rotina', relato: 'do plano', manual: '' } as const
+
+type TipoDoObjetivo = NonNullable<Objetivo['tipo']>
+
+const TIPOS_DO_OBJETIVO: OpcaoSegmentada<TipoDoObjetivo>[] = [
+  { valor: 'estudo', rotulo: ROTULO_TIPO.estudo },
+  { valor: 'trabalho', rotulo: ROTULO_TIPO.trabalho },
+]
 
 /**
  * Os objetivos do dia não têm botão: o tempo das janelas que combinam com cada um aparece aqui sozinho.
@@ -23,6 +34,7 @@ export function CartaoObjetivos({ dia }: { dia: DataISO }) {
   const { resumo } = useResumoDoDia(dia)
   const objetivos = objetivosDoDia(dados, dia)
   const [novo, setNovo] = useState('')
+  const [tipoNovo, setTipoNovo] = useState<TipoDoObjetivo>('estudo')
 
   const materiasDoPlano = new Set(objetivos.map((o) => o.materiaId).filter(Boolean))
   const foraDoPlano = Object.entries(resumo.porMateria)
@@ -35,12 +47,13 @@ export function CartaoObjetivos({ dia }: { dia: DataISO }) {
     e.preventDefault()
     const texto = novo.trim()
     if (!texto) return
-    const materia = dados.materias.find((m) => !m.arquivada && m.nome.toLowerCase() === texto.toLowerCase())
+    // Objetivo de trabalho é só um título: não vira uma matéria, mesmo com o mesmo nome.
+    const materia = tipoNovo === 'estudo' ? dados.materias.find((m) => !m.arquivada && m.nome.toLowerCase() === texto.toLowerCase()) : undefined
     if (materia && objetivos.some((o) => o.materiaId === materia.id)) return setNovo('')
     const ordem = dados.objetivos.filter((o) => o.dia === dia).reduce((maior, o) => Math.max(maior, o.ordem + 1), 0)
     dispatch({
       tipo: 'objetivos/salvar',
-      objetivos: [{ id: crypto.randomUUID(), dia, materiaId: materia?.id, titulo: materia ? undefined : texto, origem: 'manual', ordem }],
+      objetivos: [{ id: crypto.randomUUID(), dia, materiaId: materia?.id, titulo: materia ? undefined : texto, tipo: tipoNovo, origem: 'manual', ordem }],
     })
     setNovo('')
   }
@@ -65,13 +78,20 @@ export function CartaoObjetivos({ dia }: { dia: DataISO }) {
       <ul className="flex flex-col">
         {objetivos.map((o) => {
           const materia = dados.materias.find((m) => m.id === o.materiaId)
+          const trabalho = o.tipo === 'trabalho'
           const ms = resumo.porObjetivo[o.id] ?? 0
           return (
             <li key={o.id} className="flex items-center gap-2.5 border-b border-border px-4 py-2.5">
-              <PontoCor cor={materia?.cor ?? 'var(--muted)'} />
+              <PontoCor cor={trabalho ? 'var(--trabalho)' : (materia?.cor ?? 'var(--muted)')} />
               <span className="min-w-0 flex-1 truncate text-sm font-semibold">{nomeDoObjetivo(dados, o)}</span>
+              {trabalho && <span className={cn(ROTULO, 'text-muted-foreground')}>{ROTULO_TIPO.trabalho}</span>}
               {ORIGEM[o.origem] && <span className={cn(ROTULO, 'text-muted-foreground')}>{ORIGEM[o.origem]}</span>}
-              <span className={cn('w-16 text-right text-sm font-semibold tabular-nums', ms > 0 ? 'text-foco' : 'text-muted-foreground')}>
+              <span
+                className={cn(
+                  'w-16 text-right text-sm font-semibold tabular-nums',
+                  ms > 0 ? (trabalho ? COR_TIPO.trabalho.texto : 'text-foco') : 'text-muted-foreground',
+                )}
+              >
                 {formatarDuracao(ms)}
               </span>
               <Button
@@ -93,9 +113,9 @@ export function CartaoObjetivos({ dia }: { dia: DataISO }) {
         )}
       </ul>
 
-      <form onSubmit={acrescentar} className="flex gap-2 border-b-2 border-contorno px-4 py-3">
+      <form onSubmit={acrescentar} className="flex flex-wrap items-center gap-2 border-b-2 border-contorno px-4 py-3">
         <Input
-          className={cn(CAMPO, 'h-9')}
+          className={cn(CAMPO, 'h-9 min-w-40 flex-1')}
           value={novo}
           onChange={(e) => setNovo(e.target.value)}
           placeholder="Uma matéria ou um objetivo livre"
@@ -109,6 +129,13 @@ export function CartaoObjetivos({ dia }: { dia: DataISO }) {
               <option key={m.id} value={m.nome} />
             ))}
         </datalist>
+        <ControleSegmentado
+          rotulo="Tipo do novo objetivo"
+          valor={tipoNovo}
+          onChange={setTipoNovo}
+          opcoes={TIPOS_DO_OBJETIVO}
+          className="shrink-0 [&>button]:min-h-8"
+        />
         <Button type="submit" variant="outline" className={cn(BOTAO, 'h-9')}>
           + Objetivo
         </Button>

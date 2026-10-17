@@ -276,7 +276,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | TRAB-04 | P1: Trabalho | T7 | Implementing |
 | TRAB-05 | P1: Trabalho | T4 | Implementing |
 | TRAB-06 | P1: Trabalho | T2 | Implementing |
-| TRAB-07 | P1: Trabalho | T8 | In Tasks |
+| TRAB-07 | P1: Trabalho | T8 | Implementing |
 | TRAB-08 | P1: Trabalho | T3 | Implementing |
 | TRAB-09 | P1: Trabalho | T3, T8 | Implementing |
 | EXPED-01 | P1: Horário de trabalho | T10 | In Tasks |
