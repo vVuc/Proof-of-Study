@@ -52,7 +52,7 @@ describe('gruposParaPrompt (INSD-02, INSD-12)', () => {
     expect(linha.outros).toBeNull()
   })
 
-  it('cada grupo leva o rótulo, o programa, o título mais usado, o tipo atual com a correção do dia e os minutos', () => {
+  it('cada grupo leva o rótulo, o programa, o título mais longo (design), o tipo atual com a correção do dia e os minutos', () => {
     const linha = gruposParaPrompt(
       [
         trecho(as(9), as(9, 10), 'notas.md - Visual Studio Code', 'code'),
@@ -63,7 +63,7 @@ describe('gruposParaPrompt (INSD-02, INSD-12)', () => {
       { 'regra:pdf': 'trabalho' },
     )
     expect(linha.grupos).toEqual([
-      { id: 'g1', rotulo: 'VS Code', programa: 'VS Code', titulo: 'projeto - Visual Studio Code', tipo: 'estudo', minutos: 60, intervalos: ['09:00-10:00'] },
+      { id: 'g1', rotulo: 'VS Code', programa: 'VS Code', titulo: 'notas.md - Visual Studio Code', tipo: 'estudo', minutos: 60, intervalos: ['09:00-10:00'] },
       { id: 'g2', rotulo: 'Leitor de PDF', programa: 'sumatrapdf', titulo: 'apostila.pdf', tipo: 'trabalho', minutos: 30, intervalos: ['10:00-10:30'] },
     ])
   })

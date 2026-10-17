@@ -80,7 +80,8 @@ export function gruposParaPrompt(
       id: `g${i + 1}`,
       rotulo: g.rotulo,
       programa: nomeDoPrograma(programa),
-      titulo: Array.from(g.titulos[0]?.titulo ?? '')
+      // O título mais longo do grupo, como manda o design (o mais usado diria menos sobre a janela).
+      titulo: Array.from(g.titulos.reduce((maior, t) => (Array.from(t.titulo).length > Array.from(maior).length ? t.titulo : maior), ''))
         .slice(0, MAX_TITULO)
         .join(''),
       tipo: g.tipo,
