@@ -7,6 +7,7 @@ import type { Faixa, Grupo } from '../utils/resumo'
 /** Cor de cada tipo: quadradinho e barra, e texto. */
 export const COR_TIPO: Record<Tipo, { bloco: string; texto: string }> = {
   estudo: { bloco: 'bg-azul', texto: 'text-foco' },
+  trabalho: { bloco: 'bg-[#d9d0c1]', texto: 'text-muted-foreground' },
   fora: { bloco: 'bg-vermelho', texto: 'text-fora' },
   ignorar: { bloco: 'bg-muted', texto: 'text-muted-foreground' },
 }

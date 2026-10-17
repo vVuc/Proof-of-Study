@@ -118,6 +118,8 @@ T37 → T38 → T39
 
 #### T1: Tipo `trabalho` e total de trabalho no resumo
 
+**Status**: ✅ Concluída
+
 **What**: `Tipo` ganha `'trabalho'`, `Sessao` ganha `trabalhoMs`, e `resumir`/`totaisDaSessao` somam o trabalho fora do foco e do fora; os `Record<Tipo, …>` que o compilador apontar (`ROTULO_TIPO`, `COR_ATIVA` e outros) ganham a entrada.
 **Where**: `src/features/sessao/utils/resumo.ts`
 **Depends on**: None
@@ -131,10 +133,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Um grupo corrigido para `trabalho` soma em `trabalhoMs` e não em `focoMs`, `foraMs` nem `focoPorMateria` (teste em `resumo.test.ts`)
-- [ ] Uma regra `trabalho` produz o mesmo resultado (teste)
-- [ ] Gate passa: build
-- [ ] Contagem do front ≥ 53 + 2
+- [x] Um grupo corrigido para `trabalho` soma em `trabalhoMs` e não em `focoMs`, `foraMs` nem `focoPorMateria` (teste em `resumo.test.ts`)
+- [x] Uma regra `trabalho` produz o mesmo resultado (teste)
+- [x] Gate passa: build
+- [x] Contagem do front ≥ 53 + 2
 
 **Tests**: unit
 **Gate**: build

@@ -52,6 +52,8 @@ function sessaoV3(s: SessaoSalva, inicioDoDiaMin: number, v1: boolean): Sessao {
     // Até o formato 2, todo o foco da sessão era da matéria do pomodoro.
     focoPorMateria: s.focoPorMateria ?? (s.materiaId && s.focoMs > 0 ? { [s.materiaId]: s.focoMs } : {}),
     semObjetivoMs: s.semObjetivoMs ?? (s.materiaId ? 0 : s.focoMs),
+    // Antes do formato 4 não existia trabalho: a soma de foco não muda.
+    trabalhoMs: s.trabalhoMs ?? 0,
   }
 }
 

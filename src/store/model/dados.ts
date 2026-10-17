@@ -5,8 +5,11 @@ export const VERSAO_DADOS = 3
 
 export type Categoria = 'estudo' | 'trabalho' | 'jogo' | 'treino' | 'terapia' | 'sono'
 
-/** Estudo soma no banco; fora do estudo é distração (ou ausência); ignorar fica registrado, mas não conta. */
-export type Tipo = 'estudo' | 'fora' | 'ignorar'
+/**
+ * Estudo soma no banco; trabalho tem total próprio (não soma no banco e não é distração); fora do estudo é
+ * distração (ou ausência); ignorar fica registrado, mas não conta.
+ */
+export type Tipo = 'estudo' | 'trabalho' | 'fora' | 'ignorar'
 
 /** Correção de um grupo de janelas num dia: outro tipo ou estudo de uma matéria (`materia:<id>`). */
 export type Ajuste = Tipo | `materia:${string}`
@@ -110,6 +113,8 @@ export interface Sessao {
   /** Todo o tempo de estudo (com e sem objetivo). */
   focoMs: number
   foraMs: number
+  /** Tempo de trabalho (regra, objetivo de trabalho, expediente ou correção). */
+  trabalhoMs: number
   /** Estudo atribuído a cada matéria. */
   focoPorMateria: Record<string, number>
   /** Estudo que o app não soube ligar a um objetivo. */

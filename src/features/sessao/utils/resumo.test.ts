@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Materia, Objetivo, Regra, Trecho } from '@/store/model/dados'
-import { ajustesMudados, resumir } from './resumo'
+import { ajustesMudados, resumir, totaisDaSessao } from './resumo'
 
 const MIN = 60_000
 const regras: Regra[] = [
@@ -68,6 +68,38 @@ describe('resumir', () => {
     const ajustes = { 'materia:ingles': 'materia:ingles', 'regra:youtube': 'estudo', 'regra:pdf': 'estudo' } as const
     const r = resumir(dia(), ctx, ajustes)
     expect(ajustesMudados(r.grupos, ajustes)).toEqual({ 'regra:youtube': 'estudo' })
+  })
+
+  it('um grupo corrigido para trabalho soma em trabalhoMs, e não no foco, no fora nem nas matérias (TRAB-02)', () => {
+    const ctx = { regras, materias, objetivos: [objetivo('o1', 'ingles'), objetivo('o2', 'blender')] }
+    // O PDF era estudo sem matéria (10 min) e o YouTube dos gatinhos era fora do estudo (15 min).
+    const r = resumir(dia(), ctx, { 'regra:pdf': 'trabalho', 'regra:youtube': 'trabalho' })
+    expect(r.trabalhoMs).toBe(25 * MIN)
+    expect(r.focoMs).toBe(50 * MIN)
+    expect(r.foraMs).toBe(0)
+    expect(r.porMateria).toEqual({ ingles: 30 * MIN, blender: 20 * MIN })
+    expect(r.semObjetivoMs).toBe(0)
+    expect(r.totalMs).toBe(75 * MIN)
+    expect(r.grupos.find((g) => g.chave === 'regra:pdf')).toMatchObject({ tipo: 'trabalho', tipoPadrao: 'estudo' })
+    expect(totaisDaSessao(r)).toEqual({
+      focoMs: 50 * MIN,
+      foraMs: 0,
+      trabalhoMs: 25 * MIN,
+      focoPorMateria: { ingles: 30 * MIN, blender: 20 * MIN },
+      semObjetivoMs: 0,
+    })
+  })
+
+  it('uma regra de trabalho produz o mesmo resultado que a correção (TRAB-02)', () => {
+    const slack: Regra = { id: 'slack', rotulo: 'Slack', campo: 'app', termos: ['slack'], tipo: 'trabalho' }
+    const ctx = { regras: [...regras, slack], materias, objetivos: [objetivo('o1', 'ingles'), objetivo('o2', 'blender')] }
+    const r = resumir([...dia(), trecho(25, 'Canal geral', 'slack')], ctx)
+    expect(r.trabalhoMs).toBe(25 * MIN)
+    expect(r.focoMs).toBe(60 * MIN)
+    expect(r.foraMs).toBe(15 * MIN)
+    expect(r.porMateria).toEqual({ ingles: 30 * MIN, blender: 20 * MIN })
+    expect(r.grupos.find((g) => g.chave === 'regra:slack')).toMatchObject({ tipo: 'trabalho', tipoPadrao: 'trabalho' })
+    expect(totaisDaSessao(r).trabalhoMs).toBe(25 * MIN)
   })
 
   it('faixas juntam trechos seguidos do mesmo tipo', () => {

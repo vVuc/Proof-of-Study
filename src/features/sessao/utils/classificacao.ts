@@ -119,7 +119,7 @@ export interface Classe {
   fixo?: boolean
 }
 
-export const ROTULO_TIPO: Record<Tipo, string> = { estudo: 'Estudo', fora: 'Fora do estudo', ignorar: 'Ignorar' }
+export const ROTULO_TIPO: Record<Tipo, string> = { estudo: 'Estudo', trabalho: 'Trabalho', fora: 'Fora do estudo', ignorar: 'Ignorar' }
 
 type JanelaLida = Pick<Trecho, 'titulo' | 'processo' | 'proprio' | 'ausente' | 'semCaptura'>
 

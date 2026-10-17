@@ -124,6 +124,7 @@ describe('autoanalise', () => {
       ajustes: {},
       focoMs: 90 * MIN,
       foraMs: 20 * MIN,
+      trabalhoMs: 0,
       focoPorMateria: { ingles: 40 * MIN, blender: 50 * MIN },
       semObjetivoMs: 0,
       anotacao: '',

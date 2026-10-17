@@ -26,6 +26,8 @@ export interface Resumo {
   /** Todo o estudo, com e sem objetivo. */
   focoMs: number
   foraMs: number
+  /** Tempo de trabalho: fora do foco, do fora do estudo e do banco de horas. */
+  trabalhoMs: number
   ignoradoMs: number
   totalMs: number
   /** Grupos do maior para o menor tempo. */
@@ -65,7 +67,7 @@ function destino(classe: Classe, contexto: ContextoClassificacao, materiaForcada
 }
 
 /**
- * O resumo de um conjunto de trechos (uma sessão ou um dia): quanto foi estudo, fora e ignorado, para onde foi
+ * O resumo de um conjunto de trechos (uma sessão ou um dia): quanto foi estudo, trabalho, fora e ignorado, para onde foi
  * cada grupo de janelas e quanto estudo cada matéria e cada objetivo recebeu. `ajustes` são as correções do dia.
  */
 export function resumir(trechos: Trecho[], contexto: ContextoClassificacao | Regra[], ajustes: Record<string, Ajuste> = {}): Resumo {
@@ -123,12 +125,14 @@ export function resumir(trechos: Trecho[], contexto: ContextoClassificacao | Reg
   }
   const focoMs = soma('estudo')
   const foraMs = soma('fora')
+  const trabalhoMs = soma('trabalho')
   const ignoradoMs = soma('ignorar')
   return {
     focoMs,
     foraMs,
+    trabalhoMs,
     ignoradoMs,
-    totalMs: focoMs + foraMs + ignoradoMs,
+    totalMs: focoMs + foraMs + trabalhoMs + ignoradoMs,
     grupos: lista,
     faixas,
     saidas: faixas.filter((f) => f.tipo === 'fora').length,
@@ -159,6 +163,12 @@ export function ajustesMudados(grupos: Grupo[], ajustes: Record<string, Ajuste>)
 }
 
 /** Os números que ficam guardados na sessão, para o banco não mudar quando as regras mudarem. */
-export function totaisDaSessao(resumo: Resumo): Pick<Sessao, 'focoMs' | 'foraMs' | 'focoPorMateria' | 'semObjetivoMs'> {
-  return { focoMs: resumo.focoMs, foraMs: resumo.foraMs, focoPorMateria: resumo.porMateria, semObjetivoMs: resumo.semObjetivoMs }
+export function totaisDaSessao(resumo: Resumo): Pick<Sessao, 'focoMs' | 'foraMs' | 'trabalhoMs' | 'focoPorMateria' | 'semObjetivoMs'> {
+  return {
+    focoMs: resumo.focoMs,
+    foraMs: resumo.foraMs,
+    trabalhoMs: resumo.trabalhoMs,
+    focoPorMateria: resumo.porMateria,
+    semObjetivoMs: resumo.semObjetivoMs,
+  }
 }

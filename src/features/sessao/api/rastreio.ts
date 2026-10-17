@@ -49,7 +49,7 @@ export interface ConfiguracaoRastreio {
   ausenciaLongaSeg: number
   avisoDistracaoSeg: number | null
   cicloSeg: number | null
-  regras: { rotulo: string; termos: string[]; campo: 'app' | 'titulo'; tipo: 'estudo' | 'fora' | 'ignorar' }[]
+  regras: { rotulo: string; termos: string[]; campo: 'app' | 'titulo'; tipo: 'estudo' | 'trabalho' | 'fora' | 'ignorar' }[]
   /** Termos das matérias e dos objetivos do dia, já normalizados. */
   termos: string[]
   inicioDoDiaMin: number
