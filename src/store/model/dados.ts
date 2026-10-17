@@ -1,7 +1,7 @@
 import type { DataISO } from '@/shared/lib/datas'
 
 /** Versão do formato salvo em `dados.json`. Ao mudar o formato, suba a versão e converta em `atualizarDados`. */
-export const VERSAO_DADOS = 3
+export const VERSAO_DADOS = 4
 
 export type Categoria = 'estudo' | 'trabalho' | 'jogo' | 'treino' | 'terapia' | 'sono'
 
@@ -70,6 +70,8 @@ export interface Objetivo {
   /** Palavras do dia que ligam janelas a este objetivo, além das da matéria. */
   termos?: string[]
   origem: 'rotina' | 'relato' | 'manual'
+  /** Ausente = estudo (todos os objetivos até o formato 3). */
+  tipo?: 'estudo' | 'trabalho'
   /** Item da rotina que gerou o objetivo. */
   itemId?: string
   ordem: number
@@ -155,6 +157,39 @@ export interface Relato {
   atrasado: boolean
 }
 
+/** Sugestão da IA para um grupo de janelas do dia. Aceita = o ajuste do relato é igual a ela. */
+export interface SugestaoIA {
+  /** A `Classe.chave` do grupo, a mesma chave dos `ajustes` do relato final. */
+  chave: string
+  ajuste: Ajuste
+  /** Até 140 caracteres. */
+  motivo: string
+  recusada?: boolean
+}
+
+export interface InsightDia {
+  id: string
+  tipo: 'dia'
+  dia: DataISO
+  texto: string
+  sugestoes: SugestaoIA[]
+  modelo: string
+  criadoEm: number
+}
+
+export interface InsightSemana {
+  id: string
+  tipo: 'semana'
+  /** Segunda-feira da semana. */
+  semana: DataISO
+  partes: { comoFoi: string; padroes: string; proximaSemana: string }
+  modelo: string
+  criadoEm: number
+}
+
+/** Um por dia e um por semana; gerar de novo substitui. */
+export type Insight = InsightDia | InsightSemana
+
 export type ModeloVoz = 'base' | 'small'
 
 export interface Preferencias {
@@ -177,6 +212,14 @@ export interface Preferencias {
   iniciarComSistema: boolean
   voz: boolean
   modeloVoz: ModeloVoz
+  /** "Usar IA (Gemini)". Só fica ligada com chave salva e consentimento. */
+  ia: boolean
+  /** Momento do consentimento; `null` = nunca concordou. */
+  consentimentoIA: number | null
+  /** "Sobre você", até 2.000 caracteres. */
+  sobreVoce: string
+  /** "Não mostrar de novo" na sugestão de cadastrar o horário de trabalho. */
+  ocultarAvisoExpediente: boolean
 }
 
 export interface Dados {
@@ -188,6 +231,7 @@ export interface Dados {
   relatos: Relato[]
   regras: Regra[]
   preferencias: Preferencias
+  insights: Insight[]
 }
 
 export const PREFERENCIAS_PADRAO: Preferencias = {
@@ -204,6 +248,10 @@ export const PREFERENCIAS_PADRAO: Preferencias = {
   iniciarComSistema: false,
   voz: true,
   modeloVoz: 'base',
+  ia: false,
+  consentimentoIA: null,
+  sobreVoce: '',
+  ocultarAvisoExpediente: false,
 }
 
 const app = (rotulo: string, termos: string[], tipo: Tipo): Regra => ({ id: crypto.randomUUID(), rotulo, campo: 'app', termos, tipo })
@@ -259,5 +307,6 @@ export function dadosIniciais(): Dados {
     relatos: [],
     regras: regrasPadrao(),
     preferencias: PREFERENCIAS_PADRAO,
+    insights: [],
   }
 }

@@ -147,6 +147,8 @@ T37 → T38 → T39
 
 #### T2: Formato 4 e conversão 3 → 4
 
+**Status**: ✅ Concluída
+
 **What**: `VERSAO_DADOS = 4`, `Objetivo.tipo`, os tipos `SugestaoIA`/`InsightDia`/`InsightSemana`, `Dados.insights` e as preferências `ia`, `consentimentoIA`, `sobreVoce` e `ocultarAvisoExpediente` (com os padrões), mais a conversão do formato 3 em `atualizarDados`.
 **Where**: `src/store/model/migracao.ts`
 **Depends on**: T1
@@ -160,12 +162,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Dados do formato 3 convertidos mantêm regras, ajustes, objetivos e a soma de foco iguais (teste)
-- [ ] Sessões convertidas têm `trabalhoMs: 0`, `insights` vem vazio e as preferências novas vêm com os padrões (teste)
-- [ ] Objetivo sem `tipo` continua contando como estudo (teste)
-- [ ] Dados de uma versão maior que 4 continuam recusados (teste existente passa)
-- [ ] Gate passa: build
-- [ ] Contagem do front ≥ anterior + 3
+- [x] Dados do formato 3 convertidos mantêm regras, ajustes, objetivos e a soma de foco iguais (teste)
+- [x] Sessões convertidas têm `trabalhoMs: 0`, `insights` vem vazio e as preferências novas vêm com os padrões (teste)
+- [x] Objetivo sem `tipo` continua contando como estudo (teste)
+- [x] Dados de uma versão maior que 4 continuam recusados (teste existente passa)
+- [x] Gate passa: build
+- [x] Contagem do front ≥ anterior + 3
 
 **Tests**: unit
 **Gate**: build

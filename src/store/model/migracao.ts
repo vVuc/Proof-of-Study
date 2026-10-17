@@ -114,5 +114,6 @@ export function atualizarDados(salvo: DadosSalvos | undefined, versao = VERSAO_D
     relatos: salvo.relatos ?? [],
     regras,
     preferencias,
+    insights: salvo.insights ?? [],
   }
 }

@@ -275,7 +275,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | TRAB-03 | P1: Trabalho | T11 | In Tasks |
 | TRAB-04 | P1: Trabalho | T7 | In Tasks |
 | TRAB-05 | P1: Trabalho | T4 | In Tasks |
-| TRAB-06 | P1: Trabalho | T2 | In Tasks |
+| TRAB-06 | P1: Trabalho | T2 | Implementing |
 | TRAB-07 | P1: Trabalho | T8 | In Tasks |
 | TRAB-08 | P1: Trabalho | T3 | In Tasks |
 | TRAB-09 | P1: Trabalho | T3, T8 | In Tasks |

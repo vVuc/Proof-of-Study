@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Regra, Trecho } from './dados'
+import { classificar } from '@/features/sessao/utils/classificacao'
+import { VERSAO_DADOS, type Regra, type Trecho } from './dados'
 import { atualizarDados, DadosIncompativeis, type DadosSalvos } from './migracao'
 
 const HORA = 3_600_000
@@ -41,6 +42,57 @@ function v2(extra: Partial<DadosSalvos> = {}): DadosSalvos {
     ],
     sessaoAtual: null,
     ...extra,
+  }
+}
+
+const regraYoutube: Regra = { id: 'r2', rotulo: 'YouTube', campo: 'titulo', termos: ['youtube'], tipo: 'fora' }
+const regraSpotify: Regra = { id: 'r3', rotulo: 'Spotify', campo: 'app', termos: ['spotify'], tipo: 'ignorar' }
+
+/** Dados como o formato 3 salvava: sem trabalho, sem insights e sem as preferências da IA. */
+function v3(): DadosSalvos {
+  return {
+    materias: [{ id: 'ingles', nome: 'Inglês', cor: '#d7322a' }],
+    metas: [],
+    blocos: [],
+    objetivos: [
+      { id: 'o1', dia: '2026-10-20', titulo: 'Modelar a cadeira', origem: 'manual', ordem: 0 },
+      { id: 'o2', dia: '2026-10-20', materiaId: 'ingles', origem: 'rotina', itemId: 'b1', ordem: 1 },
+    ],
+    regras: [regraAnki, regraYoutube, regraSpotify],
+    relatos: [],
+    preferencias: { cicloMin: 25, limiteAusenciaMin: 7, avisoDistracao: false, inicioDoDiaMin: 5 * 60, voz: false, modeloVoz: 'small' },
+    sessoes: [
+      {
+        id: 's1',
+        dia: '2026-10-20',
+        inicio: nove,
+        fim: nove + HORA,
+        pausas: [],
+        trechos: [trecho(nove, nove + HORA, 'Anki', 'anki')],
+        ajustes: { 'regra:r2': 'estudo', 'regra:r3': 'fora', 'site:reddit': 'materia:ingles' },
+        focoMs: HORA,
+        foraMs: 0,
+        focoPorMateria: { ingles: HORA },
+        semObjetivoMs: 0,
+        anotacao: 'verbos',
+        imagens: [],
+      },
+      {
+        id: 's2',
+        dia: '2026-10-21',
+        inicio: nove + 24 * HORA,
+        fim: nove + 25.5 * HORA,
+        pausas: [],
+        trechos: [trecho(nove + 24 * HORA, nove + 25 * HORA, 'Modelar a cadeira - Blender', 'blender')],
+        ajustes: {},
+        focoMs: HORA,
+        foraMs: 0.5 * HORA,
+        focoPorMateria: {},
+        semObjetivoMs: HORA,
+        anotacao: '',
+        imagens: [],
+      },
+    ],
   }
 }
 
@@ -105,11 +157,38 @@ describe('atualizarDados', () => {
   })
 
   it('recusa dados de uma versão mais nova do app', () => {
-    expect(() => atualizarDados(v2(), 4)).toThrow(DadosIncompativeis)
+    expect(() => atualizarDados(v2(), 5)).toThrow(DadosIncompativeis)
   })
 
   it('dados já no formato 3 passam sem mudança', () => {
     const uma = atualizarDados(v2(), 2)
     expect(atualizarDados(uma, 3)).toEqual(uma)
+  })
+
+  it('formato 3 → 4: regras, correções, objetivos e a soma de foco ficam iguais (TRAB-06)', () => {
+    const salvo = v3()
+    const dados = atualizarDados(salvo, 3)
+    expect(dados.regras).toEqual(salvo.regras)
+    expect(dados.sessoes.map((s) => s.ajustes)).toEqual([{ 'regra:r2': 'estudo', 'regra:r3': 'fora', 'site:reddit': 'materia:ingles' }, {}])
+    expect(dados.objetivos).toEqual(salvo.objetivos)
+    expect(dados.sessoes.reduce((soma, s) => soma + s.focoMs, 0)).toBe(2 * HORA)
+    expect(dados.sessoes.map((s) => s.focoPorMateria)).toEqual([{ ingles: HORA }, {}])
+  })
+
+  it('formato 3 → 4: sessões com trabalhoMs 0, insights vazio e preferências da IA com os padrões (TRAB-06)', () => {
+    const dados = atualizarDados(v3(), 3)
+    expect(VERSAO_DADOS).toBe(4)
+    expect(dados.sessoes.map((s) => s.trabalhoMs)).toEqual([0, 0])
+    expect(dados.insights).toEqual([])
+    expect(dados.preferencias).toMatchObject({ ia: false, consentimentoIA: null, sobreVoce: '', ocultarAvisoExpediente: false })
+    // O que a pessoa já tinha configurado fica.
+    expect(dados.preferencias).toMatchObject({ cicloMin: 25, limiteAusenciaMin: 7, inicioDoDiaMin: 5 * 60, voz: false })
+  })
+
+  it('formato 3 → 4: objetivo salvo sem tipo continua contando como estudo (TRAB-06)', () => {
+    const dados = atualizarDados(v3(), 3)
+    const janela = { titulo: 'Modelar a cadeira - Blender', processo: 'blender', proprio: false, ausente: false }
+    const classe = classificar(janela, { regras: dados.regras, materias: dados.materias, objetivos: dados.objetivos })
+    expect(classe).toMatchObject({ tipo: 'estudo', objetivoId: 'o1' })
   })
 })
