@@ -925,6 +925,8 @@ T37 → T38 → T39
 
 #### T28: Leitura da resposta do plano
 
+**Status**: ✅ Concluída
+
 **What**: `lerRespostaDoPlano(texto, mapa, dados, dia)` devolve os `Objetivo` novos com `origem: 'relato'`.
 **Where**: `src/features/ia/utils/respostas.ts`
 **Depends on**: T27
@@ -938,12 +940,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Matéria inexistente vira objetivo de estudo com título livre (teste)
-- [ ] Tipo que não é estudo nem trabalho sai (teste)
-- [ ] Matéria ou título que o dia já tem não duplica, sem diferenciar acento e caixa (testes)
-- [ ] Objetivo de trabalho sai com `tipo: 'trabalho'`, título e termos (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 5
+- [x] Matéria inexistente vira objetivo de estudo com título livre (teste)
+- [x] Tipo que não é estudo nem trabalho sai (teste)
+- [x] Matéria ou título que o dia já tem não duplica, sem diferenciar acento e caixa (testes)
+- [x] Objetivo de trabalho sai com `tipo: 'trabalho'`, título e termos (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 5
 
 **Tests**: unit
 **Gate**: quick

@@ -1,4 +1,7 @@
-import type { Ajuste, SugestaoIA } from '@/store/model/dados'
+import type { DataISO } from '@/shared/lib/datas'
+import type { Ajuste, Dados, Objetivo, SugestaoIA } from '@/store/model/dados'
+import { nomeDoObjetivo, objetivosDoDia } from '@/features/hoje/utils/dia'
+import { normalizar } from '@/features/sessao/utils/classificacao'
 import { TIPOS_DA_SUGESTAO, type MapaIds } from './prompts'
 
 const MAX_MOTIVO = 140
@@ -47,4 +50,45 @@ export function lerRespostaDoDia(texto: string, mapa: MapaIds): { texto: string;
     if (sugestao && !sugestoes.some((x) => x.chave === sugestao.chave)) sugestoes.push(sugestao)
   }
   return { texto: json.texto.trim(), sugestoes }
+}
+
+/** O texto sem espaços nas pontas; o que não é texto vira vazio. */
+const limpo = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
+
+/**
+ * A resposta do plano do dia: os objetivos novos, com `origem: 'relato'`. Matéria que não existe vira estudo com título
+ * livre (PLANO-02), tipo que não é estudo nem trabalho sai (PLANO-03), e matéria ou nome que o dia já tem não duplica,
+ * sem diferenciar acento e caixa (PLANO-04). `null` se o JSON não fechar.
+ */
+export function lerRespostaDoPlano(resposta: string, mapa: MapaIds, dados: Dados, dia: DataISO): Objetivo[] | null {
+  const json = lerJSON(resposta)
+  if (!ehObjeto(json) || !Array.isArray(json.objetivos)) return null
+  const doDia = objetivosDoDia(dados, dia)
+  const nome = (o: Objetivo) => normalizar(nomeDoObjetivo(dados, o).trim())
+  let ordem = dados.objetivos.filter((o) => o.dia === dia).reduce((maior, o) => Math.max(maior, o.ordem + 1), 0)
+  const novos: Objetivo[] = []
+  for (const item of json.objetivos) {
+    if (!ehObjeto(item) || (item.tipo !== 'estudo' && item.tipo !== 'trabalho')) continue
+    const materiaId = item.tipo === 'estudo' ? traduzir(mapa.materias, item.materia) : undefined
+    // Sem matéria conhecida, o título livre; na falta dele, o nome da matéria citada (não um id curto como "m9").
+    const citada = limpo(item.materia)
+    const titulo = materiaId ? '' : limpo(item.titulo) || (item.tipo === 'estudo' && !/^m\d+$/.test(citada) ? citada : '')
+    if (!materiaId && !titulo) continue
+    const termos = Array.isArray(item.termos) ? item.termos.map(limpo).filter(Boolean) : []
+    const objetivo: Objetivo = {
+      id: crypto.randomUUID(),
+      dia,
+      materiaId,
+      titulo: titulo || undefined,
+      termos: termos.length ? termos : undefined,
+      origem: 'relato',
+      tipo: item.tipo,
+      ordem,
+    }
+    const repetido = [...doDia, ...novos].some((o) => (materiaId && o.materiaId === materiaId) || nome(o) === nome(objetivo))
+    if (repetido) continue
+    novos.push(objetivo)
+    ordem++
+  }
+  return novos
 }
