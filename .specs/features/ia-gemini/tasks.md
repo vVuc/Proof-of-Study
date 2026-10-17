@@ -384,6 +384,8 @@ T37 → T38 → T39
 
 #### T10: Expediente na classificação
 
+**Status**: ✅ Concluída
+
 **What**: `ContextoClassificacao.expediente` (preenchido por `contextoDoDia`), `classificar` com o `inicio` do trecho, estudo só por regra no expediente vira trabalho com a chave `expediente:<chave>`, e `resumir`/`classificarSessao` dividem os trechos nas bordas antes de agrupar.
 **Where**: `src/features/sessao/utils/classificacao.ts`
 **Depends on**: T9, T3
@@ -397,13 +399,13 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] VS Code (regra de estudo) às 10h no expediente vira trabalho com a chave `expediente:regra:<id>` (teste)
-- [ ] VS Code às 20h, fora do expediente, continua estudo com a chave `regra:<id>` (teste)
-- [ ] `rust-book` com termo da matéria Rust às 12h no expediente continua estudo (teste)
-- [ ] Janela sem regra no expediente continua fora (teste)
-- [ ] Um trecho que cruza o fim do expediente fica em dois grupos com os tempos certos (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 5
+- [x] VS Code (regra de estudo) às 10h no expediente vira trabalho com a chave `expediente:regra:<id>` (teste)
+- [x] VS Code às 20h, fora do expediente, continua estudo com a chave `regra:<id>` (teste)
+- [x] `rust-book` com termo da matéria Rust às 12h no expediente continua estudo (teste)
+- [x] Janela sem regra no expediente continua fora (teste)
+- [x] Um trecho que cruza o fim do expediente fica em dois grupos com os tempos certos (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 5
 
 **Tests**: unit
 **Gate**: quick

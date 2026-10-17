@@ -112,6 +112,40 @@ describe('classificar com objetivo de trabalho', () => {
   })
 })
 
+describe('classificar no horário de trabalho', () => {
+  const rust: Materia = { id: 'rust', nome: 'Rust', cor: '#000' }
+  const vscode: Regra = { id: 'vscode', rotulo: 'VS Code', campo: 'app', termos: ['code'], tipo: 'estudo' }
+  // Segunda, 19/10/2026, com Trabalho das 9h às 18h na Rotina.
+  const hora = (h: number) => new Date(2026, 9, 19, h).getTime()
+  const expediente: [number, number][] = [[hora(9), hora(18)]]
+  const ctx = { regras: [vscode], materias: [rust], expediente }
+  const as = (h: number, titulo: string, processo: string) => ({ ...janela(titulo, processo), inicio: hora(h) })
+
+  it('VS Code (regra de estudo) às 10h no expediente vira trabalho (EXPED-01)', () => {
+    expect(classificar(as(10, 'empresa-api - Visual Studio Code', 'code'), ctx)).toMatchObject({
+      tipo: 'trabalho',
+      chave: 'expediente:regra:vscode',
+      rotulo: 'VS Code (expediente)',
+    })
+  })
+
+  it('VS Code às 20h, fora do expediente, continua estudo (EXPED-01)', () => {
+    expect(classificar(as(20, 'empresa-api - Visual Studio Code', 'code'), ctx)).toMatchObject({ tipo: 'estudo', chave: 'regra:vscode' })
+  })
+
+  it('o rust-book, com termo da matéria Rust, às 12h no expediente continua estudo (EXPED-02)', () => {
+    expect(classificar(as(12, 'ch04 ownership - rust-book - Visual Studio Code', 'code'), ctx)).toMatchObject({
+      tipo: 'estudo',
+      chave: 'materia:rust',
+      materiaId: 'rust',
+    })
+  })
+
+  it('janela sem regra no expediente continua fora (EXPED-01)', () => {
+    expect(classificar(as(11, 'geral | Slack', 'slack'), ctx)).toMatchObject({ tipo: 'fora', chave: 'app:slack', semRegra: true })
+  })
+})
+
 describe('termosDoObjetivo', () => {
   it('ignora palavras curtas e comuns', () => {
     expect(termosDoObjetivo({ titulo: 'Estudar a cadeira de jardim' })).toEqual(['cadeira', 'jardim'])

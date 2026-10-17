@@ -11,16 +11,18 @@ import {
 } from '@/features/sessao/utils/classificacao'
 import { resumir, totaisDaSessao } from '@/features/sessao/utils/resumo'
 import { relatoDoDia } from '@/features/banco/utils/validacao'
+import { intervalosDeTrabalho } from '@/features/rotina/utils/expediente'
 
 /** Os objetivos do dia que valem (sem os pulados), na ordem da tela. */
 export const objetivosDoDia = (dados: Pick<Dados, 'objetivos'>, dia: DataISO) =>
   dados.objetivos.filter((o) => o.dia === dia && !o.pulado).sort((a, b) => a.ordem - b.ordem)
 
-/** O que classifica as janelas de um dia: as regras, as matérias e os objetivos daquele dia. */
+/** O que classifica as janelas de um dia: as regras, as matérias, os objetivos e o horário de trabalho daquele dia. */
 export const contextoDoDia = (dados: Dados, dia: DataISO): ContextoClassificacao => ({
   regras: dados.regras,
   materias: dados.materias,
   objetivos: objetivosDoDia(dados, dia),
+  expediente: intervalosDeTrabalho(dados.blocos, dia, dados.preferencias.inicioDoDiaMin),
 })
 
 /** As correções do dia, feitas no relato final. */

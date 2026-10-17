@@ -1,4 +1,5 @@
 import type { Ajuste, Regra, Sessao, Tipo, Trecho } from '@/store/model/dados'
+import { dividirPorExpediente } from '@/features/rotina/utils/expediente'
 import { classificar, type Classe, type ContextoClassificacao } from './classificacao'
 
 export interface TituloNoGrupo {
@@ -70,13 +71,14 @@ function destino(classe: Classe, contexto: ContextoClassificacao, materiaForcada
 /**
  * O resumo de um conjunto de trechos (uma sessão ou um dia): quanto foi estudo, trabalho, fora e ignorado, para onde foi
  * cada grupo de janelas e quanto estudo cada matéria e cada objetivo recebeu. `ajustes` são as correções do dia.
+ * Os trechos são cortados nas bordas do horário de trabalho antes de agrupar.
  */
 export function resumir(trechos: Trecho[], contexto: ContextoClassificacao | Regra[], ajustes: Record<string, Ajuste> = {}): Resumo {
   const ctx = Array.isArray(contexto) ? { regras: contexto } : contexto
   const grupos = new Map<string, Grupo & { porTitulo: Map<string, number> }>()
   const faixas: Faixa[] = []
 
-  for (const t of trechos) {
+  for (const t of dividirPorExpediente(trechos, ctx.expediente ?? [])) {
     const ms = Math.max(0, t.fim - t.inicio)
     const classe = classificar(t, ctx)
     let grupo = grupos.get(classe.chave)

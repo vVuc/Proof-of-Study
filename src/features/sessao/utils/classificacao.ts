@@ -121,14 +121,22 @@ export interface Classe {
 
 export const ROTULO_TIPO: Record<Tipo, string> = { estudo: 'Estudo', trabalho: 'Trabalho', fora: 'Fora do estudo', ignorar: 'Ignorar' }
 
-type JanelaLida = Pick<Trecho, 'titulo' | 'processo' | 'proprio' | 'ausente' | 'semCaptura'>
+/** A janela lida; com o `inicio`, o horário de trabalho entra na conta. */
+type JanelaLida = Pick<Trecho, 'titulo' | 'processo' | 'proprio' | 'ausente' | 'semCaptura'> & Partial<Pick<Trecho, 'inicio'>>
 
-/** O que, além das regras, ajuda a classificar: as matérias (nome e termos) e os objetivos do dia. */
+/**
+ * O que, além das regras, ajuda a classificar: as matérias (nome e termos), os objetivos do dia e o horário de trabalho
+ * da Rotina (intervalos em ms desde 1970).
+ */
 export interface ContextoClassificacao {
   regras: Regra[]
   materias?: Materia[]
   objetivos?: Objetivo[]
+  expediente?: [number, number][]
 }
+
+const noExpediente = (inicio: number | undefined, expediente: [number, number][] = []) =>
+  inicio !== undefined && expediente.some(([a, b]) => a <= inicio && inicio < b)
 
 /** Minúsculas e sem acento, para "Inglês" casar com "ingles". Mesma conta de `normalizar` no Rust. */
 export const normalizar = (texto: string) =>
@@ -195,7 +203,8 @@ function porTermos(titulo: string, processo: string, contexto: ContextoClassific
  * 2. termos dos objetivos de trabalho do dia no título: trabalho, mesmo que a janela case com estudo ou com uma regra;
  * 3. termos dos objetivos de estudo do dia e das matérias no título: estudo daquela matéria (separa o tutorial de
  *    Blender no YouTube do vídeo qualquer no mesmo site);
- * 4. regras, as de título antes das de app (a primeira que casa decide);
+ * 4. regras, as de título antes das de app (a primeira que casa decide); no horário de trabalho, o estudo por regra
+ *    vira trabalho, num grupo próprio (`expediente:<chave da regra>`), para não juntar o VS Code de dentro e o de fora;
  * 5. sem regra: fora do estudo.
  */
 export function classificar(trecho: JanelaLida, contexto: ContextoClassificacao | Regra[]): Classe {
@@ -206,6 +215,8 @@ export function classificar(trecho: JanelaLida, contexto: ContextoClassificacao 
   const termo = porTermos(trecho.titulo, trecho.processo, ctx)
   if (termo) return termo
   const regra = regraQueCasa(ctx.regras, trecho.titulo, trecho.processo)
+  if (regra && regra.tipo === 'estudo' && noExpediente(trecho.inicio, ctx.expediente))
+    return { chave: `expediente:regra:${regra.id}`, rotulo: `${regra.rotulo} (expediente)`, tipo: 'trabalho' }
   if (regra)
     return { chave: `regra:${regra.id}`, rotulo: regra.rotulo, tipo: regra.tipo, materiaId: regra.tipo === 'estudo' ? regra.materiaId : undefined }
   if (ehNavegador(trecho.processo) && trecho.titulo) {

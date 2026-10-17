@@ -128,6 +128,19 @@ describe('resumir', () => {
     expect(r.focoMs).toBe(10 * MIN)
   })
 
+  it('um trecho que cruza o fim do expediente fica em dois grupos com os tempos certos (EXPED-01)', () => {
+    const vscode: Regra = { id: 'vscode', rotulo: 'VS Code', campo: 'app', termos: ['code'], tipo: 'estudo' }
+    const hora = (h: number, m = 0) => new Date(2026, 9, 19, h, m).getTime()
+    const noVsCode: Trecho = { inicio: hora(17, 30), fim: hora(19), titulo: 'projeto - Visual Studio Code', processo: 'code', proprio: false, ausente: false }
+    const r = resumir([noVsCode], { regras: [vscode], expediente: [[hora(9), hora(18)]] })
+    expect(Object.fromEntries(r.grupos.map((g) => [g.chave, [g.tipo, g.ms]]))).toEqual({
+      'expediente:regra:vscode': ['trabalho', 30 * MIN],
+      'regra:vscode': ['estudo', 60 * MIN],
+    })
+    expect(r.trabalhoMs).toBe(30 * MIN)
+    expect(r.focoMs).toBe(60 * MIN)
+  })
+
   it('faixas juntam trechos seguidos do mesmo tipo', () => {
     const r = resumir(dia(), { regras, materias })
     expect(r.faixas.map((f) => f.tipo)).toEqual(['estudo', 'fora', 'estudo'])

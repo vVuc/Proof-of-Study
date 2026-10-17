@@ -3,6 +3,7 @@ import type { Dados, MotivoPausa, Sessao, Tipo, Trecho } from '@/store/model/dad
 import { contextoDoDia, objetivosDoDia } from '@/features/hoje/utils/dia'
 import { relatoDoDia } from '@/features/banco/utils/validacao'
 import { classificar } from '@/features/sessao/utils/classificacao'
+import { dividirPorExpediente } from '@/features/rotina/utils/expediente'
 import { tipoDoAjuste } from '@/features/sessao/utils/resumo'
 
 /**
@@ -24,10 +25,10 @@ export interface TrechoClassificado {
   rotulo: string
 }
 
-/** Cada trecho de uma sessão com o tipo que valeu no dia (regras, termos e correções do relato). */
+/** Cada trecho de uma sessão, cortado nas bordas do horário de trabalho, com o tipo que valeu no dia. */
 export function classificarSessao(dados: Dados, s: Sessao): TrechoClassificado[] {
   const contexto = contextoDoDia(dados, s.dia)
-  return s.trechos.map((t: Trecho) => {
+  return dividirPorExpediente(s.trechos, contexto.expediente ?? []).map((t: Trecho) => {
     const classe = classificar(t, contexto)
     const ajuste = classe.fixo ? undefined : s.ajustes[classe.chave]
     return { inicio: t.inicio, fim: t.fim, tipo: ajuste ? tipoDoAjuste(ajuste) : classe.tipo, rotulo: classe.rotulo }
