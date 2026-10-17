@@ -13,7 +13,7 @@ import { formatarPercentual } from '@/shared/lib/percentual'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { useDados } from '@/store/context/dados-context'
-import type { Ajuste, Relato, Tipo } from '@/store/model/dados'
+import type { Ajuste, InsightDia, Relato, Tipo } from '@/store/model/dados'
 import { prazoDoRelato, relatoDoDia } from '@/features/banco/utils/validacao'
 import { BarraFaixas, PontoTipo } from '@/features/sessao/components/partes'
 import { useSessao } from '@/features/sessao/context/sessao-context'
@@ -21,6 +21,7 @@ import { useResumoDoDia } from '@/features/sessao/hooks/useResumoDoDia'
 import { ajustesMudados, taxaDeFoco } from '@/features/sessao/utils/resumo'
 import { nomeDoObjetivo, objetivosDoDia, recalcularDia } from '@/features/hoje/utils/dia'
 import { AvisoExpediente } from '@/features/rotina/components/AvisoExpediente'
+import { InsightDoDia } from '@/features/ia/components/InsightDoDia'
 import { CampoRelato } from './components/CampoRelato'
 import { GruposDoDia } from './components/GruposDoDia'
 
@@ -62,6 +63,7 @@ function Relato({ dia }: { dia: string }) {
   const estudoComMateria = Object.values(resumo.porMateria).reduce((a, b) => a + b, 0)
   const pausadoMs = pausas.reduce((s, p) => s + (p.fim - p.inicio), 0)
   const automaticas = pausas.filter((p) => p.motivo !== 'manual').length
+  const insight = dados.insights.find((i): i is InsightDia => i.tipo === 'dia' && i.dia === dia)
 
   async function salvar() {
     setSalvando(true)
@@ -163,7 +165,15 @@ function Relato({ dia }: { dia: string }) {
 
       <AvisoExpediente trabalhoMs={resumo.trabalhoMs} />
 
-      <GruposDoDia grupos={resumo.grupos} ajustes={ajustes} onAjustar={(chave, ajuste) => setAjustes((a) => ({ ...a, [chave]: ajuste }))} />
+      <InsightDoDia dia={dia} resumo={resumo} ajustes={ajustes} onAjustes={setAjustes} />
+
+      <GruposDoDia
+        grupos={resumo.grupos}
+        ajustes={ajustes}
+        onAjustar={(chave, ajuste) => setAjustes((a) => ({ ...a, [chave]: ajuste }))}
+        sugestoes={insight?.sugestoes}
+        onRecusar={(chave) => dispatch({ tipo: 'insight/recusar', dia, chave })}
+      />
 
       <div className={cn(CARTAO, 'flex flex-col gap-3 p-4')}>
         <span className={TITULO_CARD}>Como foi o dia?</span>

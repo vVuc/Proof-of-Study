@@ -286,14 +286,14 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EXPED-05 | P1: Horário de trabalho | T13 | Implementing |
 | EXPED-06 | P1: Horário de trabalho | T13 | Implementing |
 | EXPED-07 | P1: Horário de trabalho | T12 | Implementing |
-| INSD-01 | P1: Insight do dia | T26 | In Tasks |
+| INSD-01 | P1: Insight do dia | T26 | Implementing |
 | INSD-02 | P1: Insight do dia | T21, T22 | Implementing |
 | INSD-03 | P1: Insight do dia | T18, T26 | Implementing |
 | INSD-04 | P1: Insight do dia | T23, T25 | Implementing |
 | INSD-05 | P1: Insight do dia | T25 | Implementing |
 | INSD-06 | P1: Insight do dia | T25 | Implementing |
 | INSD-07 | P1: Insight do dia | T25 | Implementing |
-| INSD-08 | P1: Insight do dia | T26 | In Tasks |
+| INSD-08 | P1: Insight do dia | T26 | Implementing |
 | INSD-09 | P1: Insight do dia | T22 | Implementing |
 | INSD-10 | P1: Insight do dia | T24, T26 | Implementing |
 | INSD-11 | P1: Insight do dia | T24, T26 | Implementing |

@@ -865,6 +865,8 @@ T37 → T38 → T39
 
 #### T26: Insight do dia no relato final
 
+**Status**: ✅ Concluída
+
 **What**: `InsightDoDia` no `RelatoPage`: "Analisar o dia com IA" (dias com sessão), "Analisando o dia…", o texto, os totais de estudo, trabalho e fora calculados pelo app, "Aceitar todas", "Gerar de novo" e as mensagens de erro, sem mexer no relato quando falha.
 **Where**: `src/features/ia/components/InsightDoDia.tsx`
 **Depends on**: T22, T23, T24, T25, T18
@@ -878,10 +880,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] O botão só aparece com a IA ligada e com sessão no dia
-- [ ] O insight salvo volta ao reabrir o relato; "Gerar de novo" substitui e mantém as correções aceitas
-- [ ] Com erro, o relato continua editável e salvável
-- [ ] Gate passa: build (última da fase)
+- [x] O botão só aparece com a IA ligada e com sessão no dia
+- [x] O insight salvo volta ao reabrir o relato; "Gerar de novo" substitui e mantém as correções aceitas
+- [x] Com erro, o relato continua editável e salvável
+- [x] Gate passa: build (última da fase)
 
 **Tests**: none
 **Gate**: build
