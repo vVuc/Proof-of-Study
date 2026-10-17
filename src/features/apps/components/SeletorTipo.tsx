@@ -9,11 +9,11 @@ const COR_ATIVA: Record<Tipo, string> = {
   ignorar: 'bg-foreground text-background',
 }
 
-/** Estudo / Fora do estudo / Ignorar, em blocos colados; a opção ativa ganha a cor do tipo. */
+/** Estudo / Trabalho / Fora do estudo / Ignorar, em blocos colados; a opção ativa ganha a cor do tipo (trabalho, a da Rotina). */
 export function SeletorTipo({ valor, onChange, rotulo }: { valor?: Tipo; onChange: (tipo: Tipo) => void; rotulo: string }) {
   return (
     <div role="radiogroup" aria-label={rotulo} className="flex shrink-0 border-2 border-contorno">
-      {(['estudo', 'fora', 'ignorar'] as const).map((tipo) => {
+      {(['estudo', 'trabalho', 'fora', 'ignorar'] as const).map((tipo) => {
         const ativo = tipo === valor
         return (
           <button

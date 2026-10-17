@@ -270,7 +270,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | IACONF-09 | P1: Ligar a IA | T16, T20 | In Tasks |
 | IACONF-10 | P1: Ligar a IA | T20 | In Tasks |
 | IACONF-11 | P1: Ligar a IA | T20, T22, T27 | In Tasks |
-| TRAB-01 | P1: Trabalho | T5, T6 | In Tasks |
+| TRAB-01 | P1: Trabalho | T5, T6 | Implementing |
 | TRAB-02 | P1: Trabalho | T1 | Implementing |
 | TRAB-03 | P1: Trabalho | T11 | In Tasks |
 | TRAB-04 | P1: Trabalho | T7 | In Tasks |

@@ -240,6 +240,8 @@ T37 → T38 → T39
 
 #### T5: "Trabalho" nas regras de Apps e sites
 
+**Status**: ✅ Concluída
+
 **What**: `SeletorTipo` mostra Estudo, Trabalho, Fora do estudo e Ignorar, com a cor do Trabalho da Rotina na opção ativa.
 **Where**: `src/features/apps/components/SeletorTipo.tsx`
 **Depends on**: T1
@@ -253,8 +255,8 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] O seletor tem as quatro opções e salva `tipo: 'trabalho'` numa regra
-- [ ] Gate passa: build
+- [x] O seletor tem as quatro opções e salva `tipo: 'trabalho'` numa regra
+- [x] Gate passa: build
 
 **Tests**: none
 **Gate**: build
