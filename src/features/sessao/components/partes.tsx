@@ -7,7 +7,7 @@ import type { Faixa, Grupo } from '../utils/resumo'
 /** Cor de cada tipo: quadradinho e barra, e texto. */
 export const COR_TIPO: Record<Tipo, { bloco: string; texto: string }> = {
   estudo: { bloco: 'bg-azul', texto: 'text-foco' },
-  trabalho: { bloco: 'bg-[#d9d0c1]', texto: 'text-muted-foreground' },
+  trabalho: { bloco: 'bg-trabalho', texto: 'text-foreground' },
   fora: { bloco: 'bg-vermelho', texto: 'text-fora' },
   ignorar: { bloco: 'bg-muted', texto: 'text-muted-foreground' },
 }
@@ -17,7 +17,7 @@ export function PontoTipo({ tipo, className }: { tipo: Tipo; className?: string 
 }
 
 /**
- * Linha do tempo em blocos (estudo azul, fora vermelho, ignorado cinza), separados por réguas pretas.
+ * Linha do tempo em blocos (estudo azul, trabalho bege, fora vermelho, ignorado cinza), separados por réguas pretas.
  * Com `totalMs`, a largura é relativa a esse total e o resto fica vazio; sem ele, ocupa tudo.
  */
 export function BarraFaixas({ faixas, totalMs, className }: { faixas: Faixa[]; totalMs?: number; className?: string }) {

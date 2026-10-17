@@ -7,7 +7,7 @@ import { Button } from '@/shared/ui/button'
 import { useDados } from '@/store/context/dados-context'
 import { useJanela } from '@/app/janela/janela-context'
 import { BotaoPlay } from './components/ControlesDoDia'
-import { BarraFaixas, LinhaGrupo } from './components/partes'
+import { BarraFaixas, COR_TIPO, LinhaGrupo, PontoTipo } from './components/partes'
 import { PopoverCaptura } from './components/PopoverCaptura'
 import { useSessao } from './context/sessao-context'
 import { useResumoDoDia } from './hooks/useResumoDoDia'
@@ -66,6 +66,15 @@ export function SessaoPage() {
           <span className="text-muted-foreground">O dia até agora</span>
           <span>
             <span className="text-foco">{formatarDuracao(resumo.focoMs)} estudo</span> ·{' '}
+            {resumo.trabalhoMs > 0 && (
+              <>
+                <span className={cn('inline-flex items-center gap-1.5', COR_TIPO.trabalho.texto)}>
+                  <PontoTipo tipo="trabalho" />
+                  {formatarDuracao(resumo.trabalhoMs)} trabalho
+                </span>{' '}
+                ·{' '}
+              </>
+            )}
             <span className="text-fora">{formatarDuracao(resumo.foraMs)} fora</span>
           </span>
         </div>

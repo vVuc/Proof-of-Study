@@ -13,9 +13,9 @@ import { formatarPercentual } from '@/shared/lib/percentual'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { useDados } from '@/store/context/dados-context'
-import type { Ajuste, Relato } from '@/store/model/dados'
+import type { Ajuste, Relato, Tipo } from '@/store/model/dados'
 import { prazoDoRelato, relatoDoDia } from '@/features/banco/utils/validacao'
-import { BarraFaixas } from '@/features/sessao/components/partes'
+import { BarraFaixas, PontoTipo } from '@/features/sessao/components/partes'
 import { useSessao } from '@/features/sessao/context/sessao-context'
 import { useResumoDoDia } from '@/features/sessao/hooks/useResumoDoDia'
 import { ajustesMudados, taxaDeFoco } from '@/features/sessao/utils/resumo'
@@ -114,8 +114,9 @@ function Relato({ dia }: { dia: string }) {
         }
       />
 
-      <div className="grid grid-cols-2 border-2 border-contorno bg-card shadow-bloco sm:grid-cols-5">
+      <div className={cn('grid grid-cols-2 border-2 border-contorno bg-card shadow-bloco', resumo.trabalhoMs > 0 ? 'sm:grid-cols-6' : 'sm:grid-cols-5')}>
         <Numero rotulo="Estudo" valor={formatarDuracao(resumo.focoMs)} cor="text-foco" />
+        {resumo.trabalhoMs > 0 && <Numero rotulo="Trabalho" valor={formatarDuracao(resumo.trabalhoMs)} tipo="trabalho" />}
         <Numero rotulo="Fora do estudo" valor={formatarDuracao(resumo.foraMs)} cor="text-fora" />
         <Numero rotulo="Em foco" valor={formatarPercentual(taxaDeFoco(resumo.focoMs, resumo.foraMs))} />
         <Numero rotulo="Pausas" valor={formatarDuracao(pausadoMs)} detalhe={automaticas ? `${automaticas} ${automaticas === 1 ? 'automática' : 'automáticas'}` : undefined} />
@@ -225,10 +226,13 @@ function Relato({ dia }: { dia: string }) {
   )
 }
 
-function Numero({ rotulo, valor, cor, detalhe }: { rotulo: string; valor: string; cor?: string; detalhe?: string }) {
+function Numero({ rotulo, valor, cor, detalhe, tipo }: { rotulo: string; valor: string; cor?: string; detalhe?: string; tipo?: Tipo }) {
   return (
     <div className="flex flex-col gap-1 border-contorno px-3.5 py-3 not-first:border-l-2">
-      <span className={cn(ROTULO, 'text-muted-foreground')}>{rotulo}</span>
+      <span className={cn(ROTULO, 'flex items-center gap-1.5 text-muted-foreground')}>
+        {tipo && <PontoTipo tipo={tipo} />}
+        {rotulo}
+      </span>
       <span className={cn('font-heading text-[1.625rem] leading-tight font-extrabold tabular-nums', cor)}>{valor}</span>
       {detalhe && <span className="text-xs text-muted-foreground">{detalhe}</span>}
     </div>

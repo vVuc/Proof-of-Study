@@ -294,6 +294,8 @@ T37 → T38 → T39
 
 #### T7: Total e faixa de trabalho na Sessão e no relato
 
+**Status**: ✅ Concluída
+
 **What**: O token de cor `--trabalho` (`#d9d0c1`) no `index.css`, a faixa de trabalho na `BarraFaixas` e o total de trabalho na tela Sessão e no relato final, separado do estudo e do fora.
 **Where**: `src/features/sessao/components/partes.tsx`
 **Depends on**: T1
@@ -307,9 +309,9 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Sessão e relato mostram "Trabalho" com o tempo do dia quando há trabalho
-- [ ] A faixa de trabalho usa a cor do Trabalho da Rotina, nos temas claro e escuro
-- [ ] Gate passa: build
+- [x] Sessão e relato mostram "Trabalho" com o tempo do dia quando há trabalho
+- [x] A faixa de trabalho usa a cor do Trabalho da Rotina, nos temas claro e escuro
+- [x] Gate passa: build
 
 **Tests**: none
 **Gate**: build
