@@ -1,5 +1,7 @@
 import type { BlocoRotina, Dados, Materia, Meta, Objetivo, Preferencias, Regra, Relato, Sessao } from '../model/dados'
 import { regrasPadrao } from '../model/dados'
+import { recalcularDia } from '@/features/hoje/utils/dia'
+import { relatoDoDia } from '@/features/banco/utils/validacao'
 
 export type Acao =
   | { tipo: 'dados/carregar'; dados: Dados }
@@ -22,6 +24,15 @@ export type Acao =
 /** Troca o item de mesmo id, ou acrescenta no fim. */
 function salvarItem<T extends { id: string }>(lista: T[], item: T): T[] {
   return lista.some((i) => i.id === item.id) ? lista.map((i) => (i.id === item.id ? item : i)) : [...lista, item]
+}
+
+/**
+ * O horário de trabalho mudou: as sessões dos dias ainda sem relato final passam a contar com o horário novo. Os dias
+ * com relato final já foram validados e ficam como estavam.
+ */
+function recalcularDiasSemRelato(dados: Dados): Dados {
+  const dias = [...new Set(dados.sessoes.map((s) => s.dia))].filter((dia) => !relatoDoDia(dados.relatos, dia, 'final'))
+  return { ...dados, sessoes: dias.flatMap((dia) => recalcularDia(dados, dia)).reduce(salvarItem, dados.sessoes) }
 }
 
 export function dadosReducer(estado: Dados, acao: Acao): Dados {
@@ -48,10 +59,17 @@ export function dadosReducer(estado: Dados, acao: Acao): Dados {
     }
     case 'meta/excluir':
       return { ...estado, metas: estado.metas.filter((m) => m.id !== acao.id) }
-    case 'bloco/salvar':
-      return { ...estado, blocos: salvarItem(estado.blocos, acao.bloco) }
-    case 'bloco/excluir':
-      return { ...estado, blocos: estado.blocos.filter((b) => b.id !== acao.id) }
+    case 'bloco/salvar': {
+      const anterior = estado.blocos.find((b) => b.id === acao.bloco.id)
+      const novo = { ...estado, blocos: salvarItem(estado.blocos, acao.bloco) }
+      const trabalho = acao.bloco.categoria === 'trabalho' || anterior?.categoria === 'trabalho'
+      return trabalho ? recalcularDiasSemRelato(novo) : novo
+    }
+    case 'bloco/excluir': {
+      const novo = { ...estado, blocos: estado.blocos.filter((b) => b.id !== acao.id) }
+      const trabalho = estado.blocos.some((b) => b.id === acao.id && b.categoria === 'trabalho')
+      return trabalho ? recalcularDiasSemRelato(novo) : novo
+    }
     case 'objetivos/salvar':
       return { ...estado, objetivos: acao.objetivos.reduce(salvarItem, estado.objetivos) }
     case 'objetivo/excluir': {

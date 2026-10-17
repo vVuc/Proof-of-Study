@@ -447,6 +447,8 @@ T37 → T38 → T39
 
 #### T12: Recalcular os dias quando o horário de trabalho muda
 
+**Status**: ✅ Concluída
+
 **What**: `bloco/salvar` e `bloco/excluir` de um item de Trabalho recalculam com `recalcularDia` as sessões dos dias sem relato final.
 **Where**: `src/store/reducer/dados-reducer.ts`
 **Depends on**: T10
@@ -460,11 +462,11 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Criar Trabalho das 9h às 18h muda os totais de um dia sem relato final (teste em `dados-reducer.test.ts`, novo)
-- [ ] Um dia com relato final não muda (teste)
-- [ ] Salvar um item de outra categoria não recalcula (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 3
+- [x] Criar Trabalho das 9h às 18h muda os totais de um dia sem relato final (teste em `dados-reducer.test.ts`, novo)
+- [x] Um dia com relato final não muda (teste)
+- [x] Salvar um item de outra categoria não recalcula (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 3
 
 **Tests**: unit
 **Gate**: quick
