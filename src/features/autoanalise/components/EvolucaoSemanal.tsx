@@ -2,7 +2,7 @@ import { getISOWeek } from 'date-fns'
 import { CabecalhoCard } from '@/shared/components/CabecalhoCard'
 import { deISO, formatarHM, rotuloSemana, type DataISO } from '@/shared/lib/datas'
 import { CARTAO, ROTULO } from '@/shared/lib/estilos'
-import { formatarPercentual } from '@/shared/lib/percentual'
+import { formatarPercentual, fracao } from '@/shared/lib/percentual'
 import { cn } from '@/shared/lib/utils'
 import type { LinhaEvolucao } from '@/features/banco/utils/banco'
 
@@ -29,7 +29,14 @@ export function EvolucaoSemanal({ linhas, semanaAtual }: { linhas: LinhaEvolucao
 
 function Linha({ linha: l, atual }: { linha: LinhaEvolucao; atual: boolean }) {
   const cumprida = l.metas > 0 && l.metasCumpridas === l.metas
-  const status = atual ? 'Semana atual' : l.metas === 0 ? 'Sem meta' : cumprida ? 'Meta cumprida' : 'Meta não alcançada'
+  // Semana abaixo da meta mostra quanto chegou, sem rótulo de falha: estudar outra coisa é redirecionamento.
+  const status = atual
+    ? 'Semana atual'
+    : l.metas === 0
+      ? 'Sem meta'
+      : cumprida
+        ? 'Meta cumprida'
+        : `${formatarPercentual(fracao(l.noBancoMs, l.metaMs))} da meta`
   const resultado =
     l.sessoes === 0
       ? 'Nenhuma sessão.'
