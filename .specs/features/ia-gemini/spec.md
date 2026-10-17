@@ -287,7 +287,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EXPED-06 | P1: Horário de trabalho | T13 | Implementing |
 | EXPED-07 | P1: Horário de trabalho | T12 | Implementing |
 | INSD-01 | P1: Insight do dia | T26 | In Tasks |
-| INSD-02 | P1: Insight do dia | T21, T22 | In Tasks |
+| INSD-02 | P1: Insight do dia | T21, T22 | Implementing |
 | INSD-03 | P1: Insight do dia | T18, T26 | Implementing |
 | INSD-04 | P1: Insight do dia | T23, T25 | In Tasks |
 | INSD-05 | P1: Insight do dia | T25 | In Tasks |
@@ -297,7 +297,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | INSD-09 | P1: Insight do dia | T22 | In Tasks |
 | INSD-10 | P1: Insight do dia | T24, T26 | In Tasks |
 | INSD-11 | P1: Insight do dia | T24, T26 | In Tasks |
-| INSD-12 | P1: Insight do dia | T21 | In Tasks |
+| INSD-12 | P1: Insight do dia | T21 | Implementing |
 | INSD-13 | P1: Insight do dia | T23 | In Tasks |
 | IAERR-01 | P1: Falhas da IA | T14, T16, T17 | Implementing |
 | IAERR-02 | P1: Falhas da IA | T14, T17 | Implementing |

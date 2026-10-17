@@ -711,6 +711,8 @@ T37 → T38 → T39
 
 #### T21: Linha do tempo para o prompt
 
+**Status**: ✅ Concluída
+
 **What**: `gruposParaPrompt(resumo, limite = 200)` com os ids `g1…`, rótulo, programa, título mais longo (120 caracteres), tipo atual, minutos e até 20 intervalos `HH:MM-HH:MM`, sem grupos fixos e ausentes, e o resto numa linha "outros".
 **Where**: `src/features/ia/utils/linha-do-tempo.ts`
 **Depends on**: T10
@@ -724,12 +726,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] 250 grupos viram 200 + "outros" com a soma certa (teste)
-- [ ] Grupos `fixo` e `ausente` ficam de fora (teste)
-- [ ] O título passa de 120 caracteres cortado, e os intervalos ficam em 20 (testes)
-- [ ] O mapa de ids traduz `g1` de volta para a `chave` (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 5
+- [x] 250 grupos viram 200 + "outros" com a soma certa (teste)
+- [x] Grupos `fixo` e `ausente` ficam de fora (teste)
+- [x] O título passa de 120 caracteres cortado, e os intervalos ficam em 20 (testes)
+- [x] O mapa de ids traduz `g1` de volta para a `chave` (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 5
 
 **Tests**: unit
 **Gate**: quick
