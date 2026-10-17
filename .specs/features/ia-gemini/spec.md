@@ -319,8 +319,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | PLANO-02 | P2: Plano pela IA | T28 | Implementing |
 | PLANO-03 | P2: Plano pela IA | T28 | Implementing |
 | PLANO-04 | P2: Plano pela IA | T28 | Implementing |
-| PLANO-05 | P2: Plano pela IA | T29 | In Tasks |
-| PLANO-06 | P2: Plano pela IA | T29 | In Tasks |
+| PLANO-05 | P2: Plano pela IA | T29 | Implementing |
+| PLANO-06 | P2: Plano pela IA | T29 | Implementing |
 | INSS-01 | P2: Insight da semana | T39 | In Tasks |
 | INSS-02 | P2: Insight da semana | T37 | In Tasks |
 | INSS-03 | P2: Insight da semana | T38, T39 | In Tasks |

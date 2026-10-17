@@ -956,6 +956,8 @@ T37 → T38 → T39
 
 #### T29: Plano pela IA no relato inicial
 
+**Status**: ✅ Concluída
+
 **What**: Com a IA ligada, `CartaoRelatoInicial` monta os objetivos pela IA; em falha, pelo `sugerirObjetivos` com a mensagem da spec; o "Entrou nos objetivos do dia:" mostra o tipo; plano vazio não chama a IA.
 **Where**: `src/features/hoje/components/CartaoRelatoInicial.tsx`
 **Depends on**: T28, T18
@@ -969,10 +971,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Plano salvo com a IA ligada cria objetivos de estudo e de trabalho
-- [ ] Falha da IA cai na busca de palavras com a mensagem exata
-- [ ] "Pular hoje" não chama a IA
-- [ ] Gate passa: build (última da fase)
+- [x] Plano salvo com a IA ligada cria objetivos de estudo e de trabalho
+- [x] Falha da IA cai na busca de palavras com a mensagem exata
+- [x] "Pular hoje" não chama a IA
+- [x] Gate passa: build (última da fase)
 
 **Tests**: none
 **Gate**: build
