@@ -4,7 +4,7 @@ import { ROTULO_TIPO } from '@/features/sessao/utils/classificacao'
 
 const COR_ATIVA: Record<Tipo, string> = {
   estudo: 'bg-azul text-sobre-bloco',
-  trabalho: 'bg-[#d9d0c1] text-tinta',
+  trabalho: 'bg-trabalho text-tinta',
   fora: 'bg-vermelho text-sobre-bloco',
   ignorar: 'bg-foreground text-background',
 }

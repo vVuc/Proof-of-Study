@@ -132,7 +132,9 @@ function Relato({ dia }: { dia: string }) {
             <p key={o.id} className="flex items-center gap-2.5 border-b border-border px-3.5 py-2 text-sm">
               <PontoCor cor={materia?.cor ?? 'var(--muted)'} />
               <span className="flex-1">{nomeDoObjetivo(dados, o)}</span>
-              <span className="font-semibold text-foco tabular-nums">{formatarDuracao(resumo.porObjetivo[o.id] ?? 0)}</span>
+              <span className={cn('font-semibold tabular-nums', o.tipo === 'trabalho' ? 'text-tinta' : 'text-foco')}>
+                {formatarDuracao(resumo.porObjetivo[o.id] ?? 0)}
+              </span>
             </p>
           )
         })}
