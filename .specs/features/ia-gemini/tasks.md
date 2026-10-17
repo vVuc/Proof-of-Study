@@ -680,6 +680,8 @@ T37 → T38 → T39
 
 #### T20: Cartão da IA nas opções
 
+**Status**: ✅ Concluída
+
 **What**: `CardIA` na `AppsPage`: interruptor "Usar IA (Gemini)", campo da chave com teste e mensagens, os 4 últimos caracteres, "Remover chave", o aviso de chave em arquivo e o "Sobre você" (`maxLength` 2000).
 **Where**: `src/features/ia/components/CardIA.tsx`
 **Depends on**: T18, T19
@@ -693,10 +695,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Ligar abre o consentimento; sem chave aceita, a IA não liga
-- [ ] Remover a chave desliga a IA
-- [ ] O "Sobre você" não passa de 2.000 caracteres e é salvo nas preferências
-- [ ] Gate passa: build (última da fase)
+- [x] Ligar abre o consentimento; sem chave aceita, a IA não liga
+- [x] Remover a chave desliga a IA
+- [x] O "Sobre você" não passa de 2.000 caracteres e é salvo nas preferências
+- [x] Gate passa: build (última da fase)
 
 **Tests**: none
 **Gate**: build

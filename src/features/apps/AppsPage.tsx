@@ -13,6 +13,7 @@ import { classificar, ordenarRegras, ROTULO_TIPO } from '@/features/sessao/utils
 import { resumir } from '@/features/sessao/utils/resumo'
 import { PontoTipo } from '@/features/sessao/components/partes'
 import { CardPreferencias } from './components/CardPreferencias'
+import { CardIA } from '@/features/ia/components/CardIA'
 import { DialogRegra } from './components/DialogRegra'
 import { SeletorTipo } from './components/SeletorTipo'
 
@@ -113,6 +114,7 @@ export function AppsPage() {
       <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] items-start gap-4">
         <TestarTitulo />
         <CardPreferencias />
+        <CardIA />
       </div>
 
       <DialogRegra regra={editando} onClose={() => setEditando(null)} />
