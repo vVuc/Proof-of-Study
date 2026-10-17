@@ -477,6 +477,8 @@ T37 → T38 → T39
 
 #### T13: Sugestão de cadastrar o horário de trabalho
 
+**Status**: ✅ Concluída
+
 **What**: `mostrarAvisoExpediente(blocos, trabalhoMs, ocultar)` em `expediente.ts` e o `AvisoExpediente` no relato final, com o link para a Rotina e "Não mostrar de novo" (que grava `ocultarAvisoExpediente`).
 **Where**: `src/features/rotina/components/AvisoExpediente.tsx`
 **Depends on**: T9
@@ -490,10 +492,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] O predicado é verdadeiro com trabalho no dia e sem horário de Trabalho, e falso com horário, sem trabalho ou com o aviso oculto (testes em `expediente.test.ts`)
-- [ ] O aviso mostra o texto exato da spec, abre a Rotina e some para sempre com "Não mostrar de novo"
-- [ ] Gate passa: build (última da fase)
-- [ ] Contagem do front ≥ anterior + 4
+- [x] O predicado é verdadeiro com trabalho no dia e sem horário de Trabalho, e falso com horário, sem trabalho ou com o aviso oculto (testes em `expediente.test.ts`)
+- [x] O aviso mostra o texto exato da spec, abre a Rotina e some para sempre com "Não mostrar de novo"
+- [x] Gate passa: build (última da fase)
+- [x] Contagem do front ≥ anterior + 4
 
 **Tests**: unit
 **Gate**: build

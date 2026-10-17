@@ -20,6 +20,7 @@ import { useSessao } from '@/features/sessao/context/sessao-context'
 import { useResumoDoDia } from '@/features/sessao/hooks/useResumoDoDia'
 import { ajustesMudados, taxaDeFoco } from '@/features/sessao/utils/resumo'
 import { nomeDoObjetivo, objetivosDoDia, recalcularDia } from '@/features/hoje/utils/dia'
+import { AvisoExpediente } from '@/features/rotina/components/AvisoExpediente'
 import { CampoRelato } from './components/CampoRelato'
 import { GruposDoDia } from './components/GruposDoDia'
 
@@ -159,6 +160,8 @@ function Relato({ dia }: { dia: string }) {
           </p>
         )}
       </div>
+
+      <AvisoExpediente trabalhoMs={resumo.trabalhoMs} />
 
       <GruposDoDia grupos={resumo.grupos} ajustes={ajustes} onAjustar={(chave, ajuste) => setAjustes((a) => ({ ...a, [chave]: ajuste }))} />
 

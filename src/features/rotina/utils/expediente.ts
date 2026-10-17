@@ -12,6 +12,10 @@ const itensDeTrabalho = (blocos: BlocoRotina[]) => blocos.filter(temHorario).fil
 /** A Rotina tem algum item de Trabalho com horário. */
 export const temHorarioDeTrabalho = (blocos: BlocoRotina[]) => itensDeTrabalho(blocos).length > 0
 
+/** A sugestão de cadastrar o horário de trabalho: o dia teve trabalho, a Rotina não tem horário e a pessoa não a ocultou. */
+export const mostrarAvisoExpediente = (blocos: BlocoRotina[], trabalhoMs: number, ocultar: boolean) =>
+  !ocultar && trabalhoMs > 0 && !temHorarioDeTrabalho(blocos)
+
 /**
  * O horário de trabalho de um dia lógico: os itens de Trabalho com horário da Rotina nos dias da semana certos,
  * inclusive o que começa na véspera e passa da meia-noite (`fim <= inicio`), cortados nas bordas do dia lógico e

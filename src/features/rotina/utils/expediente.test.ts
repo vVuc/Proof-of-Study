@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BlocoRotina, Trecho } from '@/store/model/dados'
-import { dividirPorExpediente, intervalosDeTrabalho, temHorarioDeTrabalho } from './expediente'
+import { dividirPorExpediente, intervalosDeTrabalho, mostrarAvisoExpediente, temHorarioDeTrabalho } from './expediente'
 
 // 19/10/2026 é uma segunda (dia 1 da semana); 24/10/2026 é um sábado.
 const SEGUNDA = '2026-10-19'
@@ -51,6 +51,27 @@ describe('intervalosDeTrabalho', () => {
     expect(intervalosDeTrabalho([estudo, treino, semHorario], SEGUNDA, QUATRO_DA_MANHA)).toEqual([])
     expect(temHorarioDeTrabalho([estudo, treino, semHorario])).toBe(false)
     expect(temHorarioDeTrabalho([estudo, item()])).toBe(true)
+  })
+})
+
+describe('mostrarAvisoExpediente', () => {
+  const MEIA_HORA = 30 * 60_000
+  const semHorario = item({ inicio: undefined, fim: undefined })
+
+  it('aparece num dia com trabalho quando a Rotina não tem horário de Trabalho (EXPED-05)', () => {
+    expect(mostrarAvisoExpediente([semHorario], MEIA_HORA, false)).toBe(true)
+  })
+
+  it('não aparece quando a Rotina tem um item de Trabalho com horário (EXPED-05)', () => {
+    expect(mostrarAvisoExpediente([item()], MEIA_HORA, false)).toBe(false)
+  })
+
+  it('não aparece num dia sem trabalho (EXPED-05)', () => {
+    expect(mostrarAvisoExpediente([semHorario], 0, false)).toBe(false)
+  })
+
+  it('não aparece de novo depois de "Não mostrar de novo" (EXPED-06)', () => {
+    expect(mostrarAvisoExpediente([semHorario], MEIA_HORA, true)).toBe(false)
   })
 })
 

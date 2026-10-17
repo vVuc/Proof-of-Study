@@ -283,8 +283,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EXPED-02 | P1: Horário de trabalho | T10 | Implementing |
 | EXPED-03 | P1: Horário de trabalho | T11 | Implementing |
 | EXPED-04 | P1: Horário de trabalho | T9 | Implementing |
-| EXPED-05 | P1: Horário de trabalho | T13 | In Tasks |
-| EXPED-06 | P1: Horário de trabalho | T13 | In Tasks |
+| EXPED-05 | P1: Horário de trabalho | T13 | Implementing |
+| EXPED-06 | P1: Horário de trabalho | T13 | Implementing |
 | EXPED-07 | P1: Horário de trabalho | T12 | Implementing |
 | INSD-01 | P1: Insight do dia | T26 | In Tasks |
 | INSD-02 | P1: Insight do dia | T21, T22 | In Tasks |
