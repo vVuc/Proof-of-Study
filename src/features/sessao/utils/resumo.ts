@@ -57,7 +57,8 @@ export const materiaDoAjuste = (ajuste: Ajuste | undefined) =>
  * matéria) ou, se o dia tem um objetivo só, esse objetivo. Sem nada disso, fica sem objetivo.
  */
 function destino(classe: Classe, contexto: ContextoClassificacao, materiaForcada?: string): { materiaId?: string; objetivoId?: string } {
-  const objetivos = (contexto.objetivos ?? []).filter((o) => !o.pulado)
+  // Objetivo de trabalho não recebe estudo: nem o único do dia, nem por matéria.
+  const objetivos = (contexto.objetivos ?? []).filter((o) => !o.pulado && o.tipo !== 'trabalho')
   const doObjetivo = (materiaId: string) => objetivos.find((o) => o.materiaId === materiaId)?.id
   if (materiaForcada) return { materiaId: materiaForcada, objetivoId: doObjetivo(materiaForcada) }
   if (classe.objetivoId) return { materiaId: classe.materiaId, objetivoId: classe.objetivoId }

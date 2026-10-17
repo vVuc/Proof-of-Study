@@ -47,6 +47,13 @@ describe('resumir', () => {
     expect(r.semObjetivoMs).toBe(0)
   })
 
+  it('objetivo de trabalho, mesmo o único do dia, não recebe o estudo sem matéria (TRAB-02)', () => {
+    const empresa: Objetivo = { ...objetivo('t1', undefined, 'empresa-api'), tipo: 'trabalho' }
+    const r = resumir(dia(), { regras, materias, objetivos: [empresa] })
+    expect(r.porObjetivo).toEqual({})
+    expect(r.semObjetivoMs).toBe(10 * MIN)
+  })
+
   it('objetivo pulado não conta como objetivo do dia', () => {
     const pulado = { ...objetivo('o2', 'blender'), pulado: true }
     const r = resumir(dia(), { regras, materias, objetivos: [objetivo('o1', 'ingles'), pulado] })
