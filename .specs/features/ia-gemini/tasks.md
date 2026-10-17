@@ -773,6 +773,8 @@ T37 → T38 → T39
 
 #### T23: Leitura da resposta do dia
 
+**Status**: ✅ Concluída
+
 **What**: `lerRespostaDoDia(texto, mapa)` devolve o texto e as `SugestaoIA` válidas, ou `null` se o JSON não fechar.
 **Where**: `src/features/ia/utils/respostas.ts`
 **Depends on**: T22
@@ -786,12 +788,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Grupo inexistente, matéria inexistente e tipo fora do enum são descartados, e o resto fica (testes)
-- [ ] Estudo com matéria vira o ajuste `materia:<id>` (teste)
-- [ ] O motivo é cortado em 140 caracteres (teste)
-- [ ] JSON quebrado ou sem `texto` dá `null` (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 5
+- [x] Grupo inexistente, matéria inexistente e tipo fora do enum são descartados, e o resto fica (testes)
+- [x] Estudo com matéria vira o ajuste `materia:<id>` (teste)
+- [x] O motivo é cortado em 140 caracteres (teste)
+- [x] JSON quebrado ou sem `texto` dá `null` (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 5
 
 **Tests**: unit
 **Gate**: quick
