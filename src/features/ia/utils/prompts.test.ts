@@ -84,6 +84,7 @@ describe('montarPedidoDoDia', () => {
     expect(pedido.tipo).toBe('dia')
     expect(pedido.sistema).toContain(REGRAS_DE_TOM)
     expect(REGRAS_DE_TOM).toContain('português do Brasil')
+    expect(REGRAS_DE_TOM).toContain('tom neutro e descritivo')
     expect(REGRAS_DE_TOM).toMatch(/Não use[^.]*"perdido"[^.]*"fracasso"[^.]*"falha"/)
   })
 

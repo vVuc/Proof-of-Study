@@ -44,6 +44,12 @@ describe('horário de trabalho e as sessões dos dias (EXPED-07)', () => {
     expect(depois.sessoes[0]).toMatchObject({ focoMs: HORA, trabalhoMs: 0, semObjetivoMs: HORA })
   })
 
+  it('mudar um item de Trabalho para outra categoria devolve o tempo ao estudo nos dias sem relato final (EXPED-07)', () => {
+    const antes = dados({ blocos: [trabalho], sessoes: [sessao({ focoMs: 0, trabalhoMs: HORA, semObjetivoMs: 0 })] })
+    const depois = dadosReducer(antes, { tipo: 'bloco/salvar', bloco: { ...trabalho, categoria: 'estudo' } })
+    expect(depois.sessoes[0]).toMatchObject({ focoMs: HORA, trabalhoMs: 0 })
+  })
+
   it('um dia com relato final não muda', () => {
     const depois = dadosReducer(dados({ relatos: [relatoFinal] }), { tipo: 'bloco/salvar', bloco: trabalho })
     expect(depois.sessoes[0]).toEqual(sessao())

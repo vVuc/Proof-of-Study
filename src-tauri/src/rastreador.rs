@@ -1140,6 +1140,16 @@ mod testes {
     }
 
     #[test]
+    fn a_borda_do_expediente_fecha_no_fim() {
+        // Um milissegundo antes do fim ainda é expediente; no instante do fim, não é mais (como em resumo.test.ts).
+        let fim = nove() + 60 * MIN;
+        let mut cfg = config();
+        cfg.expediente = vec![[nove(), fim]];
+        assert!(em_expediente(&cfg, fim - 1));
+        assert!(!em_expediente(&cfg, fim));
+    }
+
+    #[test]
     fn configuracao_sem_expediente_ainda_e_lida() {
         let antiga = r#"{"limiteAusenciaSeg":300,"ausenciaLongaSeg":900,"avisoDistracaoSeg":60,"cicloSeg":null,
             "regras":[],"termos":["blender"],"inicioDoDiaMin":240}"#;

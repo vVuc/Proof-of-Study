@@ -449,7 +449,7 @@ mod testes {
         assert_eq!(erro_do_status(401, ""), ErroIA::Chave);
         assert_eq!(erro_do_status(403, "{}"), ErroIA::Chave);
         assert_eq!(erro_do_status(400, r#"{"error":{"message":"API key not valid. Please pass a valid API key."}}"#), ErroIA::Chave);
-        assert_ne!(erro_do_status(400, r#"{"error":{"message":"Invalid JSON payload"}}"#), ErroIA::Chave);
+        assert_eq!(erro_do_status(400, r#"{"error":{"message":"Invalid JSON payload"}}"#), ErroIA::Resposta);
         assert_eq!(erro_do_status(429, ""), ErroIA::Cota);
         assert_eq!(erro_do_status(503, ""), ErroIA::Indisponivel);
     }
