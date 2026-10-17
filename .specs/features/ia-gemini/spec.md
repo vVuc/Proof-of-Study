@@ -282,7 +282,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EXPED-01 | P1: Horário de trabalho | T10 | In Tasks |
 | EXPED-02 | P1: Horário de trabalho | T10 | In Tasks |
 | EXPED-03 | P1: Horário de trabalho | T11 | In Tasks |
-| EXPED-04 | P1: Horário de trabalho | T9 | In Tasks |
+| EXPED-04 | P1: Horário de trabalho | T9 | Implementing |
 | EXPED-05 | P1: Horário de trabalho | T13 | In Tasks |
 | EXPED-06 | P1: Horário de trabalho | T13 | In Tasks |
 | EXPED-07 | P1: Horário de trabalho | T12 | In Tasks |

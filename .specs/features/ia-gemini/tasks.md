@@ -352,6 +352,8 @@ T37 → T38 → T39
 
 #### T9: Intervalos de trabalho do dia
 
+**Status**: ✅ Concluída
+
 **What**: `intervalosDeTrabalho`, `dividirPorExpediente` e `temHorarioDeTrabalho` a partir dos itens de Trabalho com horário da Rotina.
 **Where**: `src/features/rotina/utils/expediente.ts`
 **Depends on**: None
@@ -365,13 +367,13 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Trabalho das 9h às 18h de segunda a sexta dá um intervalo numa segunda e nenhum num sábado (teste)
-- [ ] Item das 22h às 2h aparece no dia em que começa e no começo do dia lógico seguinte (teste)
-- [ ] Itens que se sobrepõem viram um intervalo só (teste)
-- [ ] Um trecho das 17h às 19h com expediente até 18h vira dois pedaços (teste)
-- [ ] Itens de outras categorias e sem horário são ignorados (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 5
+- [x] Trabalho das 9h às 18h de segunda a sexta dá um intervalo numa segunda e nenhum num sábado (teste)
+- [x] Item das 22h às 2h aparece no dia em que começa e no começo do dia lógico seguinte (teste)
+- [x] Itens que se sobrepõem viram um intervalo só (teste)
+- [x] Um trecho das 17h às 19h com expediente até 18h vira dois pedaços (teste)
+- [x] Itens de outras categorias e sem horário são ignorados (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 5
 
 **Tests**: unit
 **Gate**: quick
