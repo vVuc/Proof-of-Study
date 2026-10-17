@@ -1102,6 +1102,8 @@ T37 → T38 → T39
 
 #### T34: Voz ao vivo no front
 
+**Status**: ✅ Concluída
+
 **What**: `api/voz.ts` e `useVoz` com `voz_iniciar`, os eventos `voz:parcial` e `voz:erro` e `juntarTranscricao(atual, final, parcial)`, sem modelo nem download.
 **Where**: `src/features/relatos/hooks/useVoz.ts`
 **Depends on**: T31
@@ -1115,10 +1117,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] `juntarTranscricao` junta ao texto já escrito e troca o parcial pelo final (testes em `voz.test.ts`)
-- [ ] Depois de `voz:erro`, o texto acumulado continua (teste da função)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 3
+- [x] `juntarTranscricao` junta ao texto já escrito e troca o parcial pelo final (testes em `voz.test.ts`)
+- [x] Depois de `voz:erro`, o texto acumulado continua (teste da função)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 3
 
 **Tests**: unit
 **Gate**: quick

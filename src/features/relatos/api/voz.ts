@@ -1,34 +1,27 @@
 import { invoke } from '@tauri-apps/api/core'
-import type { ModeloVoz } from '@/store/model/dados'
+import { listen } from '@tauri-apps/api/event'
 
-/** Voz transcrita no PC (`src-tauri/src/voz.rs`): gravação do microfone e Whisper local. */
+/**
+ * Voz ao vivo pelo Gemini (`src-tauri/src/voz.rs`): o Rust grava o microfone, manda o áudio e devolve o texto pelos
+ * eventos. A chave e o áudio nunca passam pelo front.
+ */
 
-export interface EstadoVoz {
-  /** O app foi compilado com a voz. Sem ela, o relato é só texto. */
-  disponivel: boolean
-  modelo: 'ausente' | 'baixando' | 'pronto'
-  /** De 0 a 1, no download do modelo. */
-  progresso: number
-  gravando: boolean
-  transcrevendo: boolean
-  /** Último erro (microfone negado, download falhou…), para mostrar com a alternativa do texto. */
-  erro: string | null
+/** O erro como o Rust manda (`ErroIA`, com a tag `tipo`), incluindo `Microfone`. */
+export interface ErroVoz {
+  tipo: string
 }
 
-export interface InfoModelo {
-  nome: ModeloVoz
-  /** Tamanho do download, em MB. */
-  mb: number
-  origem: string
-}
-
-const SEM_VOZ: EstadoVoz = { disponivel: false, modelo: 'ausente', progresso: 0, gravando: false, transcrevendo: false, erro: null }
-
-/** Estado da voz; num app sem voz (ou fora do Tauri), devolve "indisponível" em vez de falhar. */
-export const lerVoz = (modelo: ModeloVoz) => invoke<EstadoVoz>('voz_estado', { modelo }).catch(() => SEM_VOZ)
-export const infoDoModelo = (modelo: ModeloVoz) => invoke<InfoModelo>('voz_modelo_info', { modelo })
-export const baixarModelo = (modelo: ModeloVoz) => invoke<void>('voz_modelo_baixar', { modelo })
-export const gravarVoz = () => invoke<void>('voz_gravar')
-/** Para a gravação e devolve o texto transcrito (leva alguns segundos). O áudio é apagado. */
-export const pararVoz = (modelo: ModeloVoz) => invoke<string>('voz_parar', { modelo })
+/** Começa a gravação com o vocabulário do dia (até 100 termos). */
+export const iniciarVoz = (vocabulario: string[]) => invoke<void>('voz_iniciar', { vocabulario })
+/** Para a gravação e devolve o texto final (o Rust espera o último trecho por até 5 s). */
+export const pararVoz = () => invoke<string>('voz_parar')
+/** Fecha a gravação sem devolver nada. */
 export const cancelarVoz = () => invoke<void>('voz_cancelar')
+
+/** O texto da fala até agora: os trechos finais e o parcial em curso. */
+export const ouvirParcial = (aoReceber: (texto: string) => void) =>
+  listen<{ texto: string }>('voz:parcial', (e) => aoReceber(e.payload.texto))
+/** A conexão caiu no meio da fala; o texto até ali continua valendo. */
+export const ouvirErro = (aoReceber: (erro: ErroVoz) => void) => listen<ErroVoz>('voz:erro', (e) => aoReceber(e.payload))
+/** A gravação acabou sozinha (10 minutos), com o texto final. */
+export const ouvirFim = (aoReceber: (texto: string) => void) => listen<{ texto: string }>('voz:fim', (e) => aoReceber(e.payload.texto))
