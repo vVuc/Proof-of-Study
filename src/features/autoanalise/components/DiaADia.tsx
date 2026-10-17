@@ -35,7 +35,7 @@ export function DiaADia({ linhas, humor }: { linhas: LinhaDoDia[]; humor: { alto
       </div>
       {[...linhas].reverse().map((l) => {
         const data = deISO(l.dia)
-        const ignorado = Math.max(0, l.registradoMs - l.focoMs - l.foraMs)
+        const ignorado = Math.max(0, l.registradoMs - l.focoMs - l.foraMs - l.trabalhoMs)
         return (
           <div key={l.dia} className={cn(COLUNAS, 'items-center border-b border-border text-[0.8125rem]')}>
             <span className="flex flex-col px-3 py-2">
@@ -44,11 +44,12 @@ export function DiaADia({ linhas, humor }: { linhas: LinhaDoDia[]; humor: { alto
             </span>
             <span className="px-3 py-2">
               <span
-                aria-label={`${formatarDuracao(l.focoMs)} de estudo, ${formatarDuracao(l.foraMs)} fora e ${formatarDuracao(ignorado)} ignorado`}
+                aria-label={`${formatarDuracao(l.focoMs)} de estudo, ${formatarDuracao(l.trabalhoMs)} de trabalho, ${formatarDuracao(l.foraMs)} fora e ${formatarDuracao(ignorado)} ignorado`}
                 className="flex h-3 gap-0.5"
                 style={{ width: `${(l.registradoMs / maior) * 100}%` }}
               >
                 <span className="bg-azul" style={{ flex: l.focoMs }} />
+                <span className="bg-trabalho" style={{ flex: l.trabalhoMs }} />
                 <span className="bg-vermelho" style={{ flex: l.foraMs }} />
                 <span className="bg-muted" style={{ flex: ignorado }} />
               </span>
