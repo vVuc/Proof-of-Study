@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { dadosIniciais, type Dados, type Relato } from '@/store/model/dados'
 import { diaValidado, focoNoBanco, sessaoValidada } from '@/features/banco/utils/validacao'
-import { objetivosDaRotina, recalcularDia, sessaoParaGravar, sugerirObjetivos, termosDoDia } from './dia'
+import { configuracaoDoRastreio, objetivosDaRotina, recalcularDia, sessaoParaGravar, sugerirObjetivos, termosDoDia } from './dia'
 
 const MIN = 60_000
 // 20/10/2026 é uma terça (dia 2 da semana).
@@ -73,6 +73,17 @@ describe('termosDoDia', () => {
     const d = dados()
     d.objetivos = [{ id: 'o', dia: DIA, titulo: 'Modelar a cadeira', origem: 'manual', ordem: 0 }]
     expect(termosDoDia(d, DIA)).toEqual(['ingles', 'verb tenses', 'blender', 'modelar', 'cadeira'])
+  })
+})
+
+describe('configuracaoDoRastreio', () => {
+  it('manda ao Rust o horário de trabalho do dia e os termos dos objetivos de trabalho (EXPED-03, TRAB-03)', () => {
+    const d = dados()
+    d.blocos = [...d.blocos, { id: 't', titulo: 'Trabalho', categoria: 'trabalho', dias: [1, 2, 3, 4, 5], inicio: 9 * 60, fim: 18 * 60, avisar: false }]
+    d.objetivos = [{ id: 'o', dia: DIA, titulo: 'empresa-api', termos: ['empresa-api'], tipo: 'trabalho', origem: 'manual', ordem: 0 }]
+    const config = configuracaoDoRastreio(d, DIA)
+    expect(config.expediente).toEqual([[nove, new Date(2026, 9, 20, 18).getTime()]])
+    expect(config.termos).toContain('empresa-api')
   })
 })
 

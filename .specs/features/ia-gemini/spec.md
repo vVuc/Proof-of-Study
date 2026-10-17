@@ -272,7 +272,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | IACONF-11 | P1: Ligar a IA | T20, T22, T27 | In Tasks |
 | TRAB-01 | P1: Trabalho | T5, T6 | Implementing |
 | TRAB-02 | P1: Trabalho | T1 | Implementing |
-| TRAB-03 | P1: Trabalho | T11 | In Tasks |
+| TRAB-03 | P1: Trabalho | T11 | Implementing |
 | TRAB-04 | P1: Trabalho | T7 | Implementing |
 | TRAB-05 | P1: Trabalho | T4 | Implementing |
 | TRAB-06 | P1: Trabalho | T2 | Implementing |
@@ -281,7 +281,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | TRAB-09 | P1: Trabalho | T3, T8 | Implementing |
 | EXPED-01 | P1: Horário de trabalho | T10 | Implementing |
 | EXPED-02 | P1: Horário de trabalho | T10 | Implementing |
-| EXPED-03 | P1: Horário de trabalho | T11 | In Tasks |
+| EXPED-03 | P1: Horário de trabalho | T11 | Implementing |
 | EXPED-04 | P1: Horário de trabalho | T9 | Implementing |
 | EXPED-05 | P1: Horário de trabalho | T13 | In Tasks |
 | EXPED-06 | P1: Horário de trabalho | T13 | In Tasks |

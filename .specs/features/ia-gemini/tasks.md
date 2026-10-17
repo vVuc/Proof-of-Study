@@ -416,6 +416,8 @@ T37 → T38 → T39
 
 #### T11: Aviso de distração com trabalho e expediente
 
+**Status**: ✅ Concluída
+
 **What**: `Configuracao.expediente` no Rust (`serde(default)`), sem aviso dentro do expediente, e `configuracaoDoRastreio` mandando os intervalos do dia; os termos dos objetivos de trabalho já entram em `termos`.
 **Where**: `src-tauri/src/rastreador.rs`
 **Depends on**: T9
@@ -429,12 +431,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Janela fora do estudo dentro do expediente não dispara o aviso (teste Rust)
-- [ ] A mesma janela fora do expediente dispara (teste Rust)
-- [ ] Regra `trabalho` e termo de objetivo de trabalho não disparam (teste Rust)
-- [ ] Configuração sem `expediente` (formato antigo) ainda é lida (teste Rust)
-- [ ] `configuracaoDoRastreio` inclui os intervalos e os termos de trabalho (teste em `dia.test.ts`)
-- [ ] Gate passa: full
+- [x] Janela fora do estudo dentro do expediente não dispara o aviso (teste Rust)
+- [x] A mesma janela fora do expediente dispara (teste Rust)
+- [x] Regra `trabalho` e termo de objetivo de trabalho não disparam (teste Rust)
+- [x] Configuração sem `expediente` (formato antigo) ainda é lida (teste Rust)
+- [x] `configuracaoDoRastreio` inclui os intervalos e os termos de trabalho (teste em `dia.test.ts`)
+- [x] Gate passa: full
 
 **Tests**: unit
 **Gate**: full

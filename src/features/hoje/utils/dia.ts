@@ -75,7 +75,7 @@ export function sugerirObjetivos(texto: string, dados: Dados, dia: DataISO): Obj
     .map((m) => ({ id: crypto.randomUUID(), dia, materiaId: m.id, origem: 'relato' as const, ordem: ordem++ }))
 }
 
-/** Os termos que o Rust usa para não avisar distração em janelas de estudo: matérias e objetivos do dia. */
+/** Os termos que o Rust usa para não avisar distração: matérias e objetivos do dia, de estudo e de trabalho. */
 export function termosDoDia(dados: Dados, dia: DataISO): string[] {
   const termos = [
     ...dados.materias.filter((m) => !m.arquivada).flatMap(termosDaMateria),
@@ -95,6 +95,8 @@ export function configuracaoDoRastreio(dados: Dados, dia: DataISO) {
     regras: ordenarRegras(dados.regras).map(({ rotulo, termos, campo, tipo }) => ({ rotulo, termos, campo, tipo })),
     termos: termosDoDia(dados, dia),
     inicioDoDiaMin: p.inicioDoDiaMin,
+    /** Sem aviso de distração no horário de trabalho. */
+    expediente: intervalosDeTrabalho(dados.blocos, dia, p.inicioDoDiaMin),
   }
 }
 

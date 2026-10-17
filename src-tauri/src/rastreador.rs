@@ -77,7 +77,7 @@ pub struct Regra {
     pub termos: Vec<String>,
     /// `app` compara com o nome do programa; `titulo`, com o título da janela.
     pub campo: String,
-    /// `estudo`, `fora` ou `ignorar`.
+    /// `estudo`, `trabalho`, `fora` ou `ignorar`. Só `fora` avisa distração.
     pub tipo: String,
 }
 
@@ -93,11 +93,16 @@ pub struct Configuracao {
     /// Lembrete de pausa a cada tantos segundos rodando; sem valor, não lembra.
     pub ciclo_seg: Option<i64>,
     pub regras: Vec<Regra>,
-    /// Termos das matérias e dos objetivos do dia, já normalizados: janela que casa é estudo.
+    /// Termos das matérias e dos objetivos do dia (de estudo e de trabalho), já normalizados: janela que casa não é
+    /// distração.
     #[serde(default)]
     pub termos: Vec<String>,
     /// Minuto do dia em que o dia lógico começa.
     pub inicio_do_dia_min: i64,
+    /// Horário de trabalho do dia (itens de Trabalho com horário da Rotina), em ms desde 1970: dentro dele, nenhum
+    /// aviso de distração.
+    #[serde(default)]
+    pub expediente: Vec<[i64; 2]>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -485,6 +490,11 @@ fn distracao(config: &Configuracao, janela: &Janela) -> Option<String> {
     }
 }
 
+/// O momento cai no horário de trabalho do dia.
+fn em_expediente(config: &Configuracao, agora: i64) -> bool {
+    config.expediente.iter().any(|&[inicio, fim]| inicio <= agora && agora < fim)
+}
+
 fn formatar_minutos(ms: i64) -> String {
     let minutos = (ms as f64 / 60_000.0).round() as i64;
     if minutos <= 1 { "1 minuto".into() } else { format!("{minutos} minutos") }
@@ -617,8 +627,11 @@ fn avancar(e: &mut Estado, agora: i64, ler: &mut dyn FnMut() -> Leitura, avisos:
                     return;
                 }
 
+            // No horário de trabalho, nada avisa: Slack e Teams sem regra dariam aviso o tempo todo.
             let distraido = match &leitura {
-                Some(l) if e.captura && l.sem_uso < config.limite_ausencia_seg * 1000 => distracao(&config, &l.janela),
+                Some(l) if e.captura && l.sem_uso < config.limite_ausencia_seg * 1000 && !em_expediente(&config, agora) => {
+                    distracao(&config, &l.janela)
+                }
                 _ => None,
             };
             match (config.aviso_distracao_seg, distraido) {
@@ -905,6 +918,7 @@ mod testes {
             regras: vec![regra("YouTube", "youtube", "titulo", "fora"), regra("Spotify", "spotify", "app", "ignorar")],
             termos: vec!["blender".into()],
             inicio_do_dia_min: 4 * 60,
+            expediente: vec![],
         }
     }
 
@@ -1089,6 +1103,52 @@ mod testes {
         let avisos = rodar(&mut e, t0 + 2 * MIN, t0 + 26 * MIN, &mut leitor("Blender - YouTube", 0));
         assert_eq!(avisos.iter().filter(|(t, _)| t == "Hora de uma pausa").count(), 1);
         assert!(avisos.iter().all(|(t, _)| t != "Fora do estudo"));
+    }
+
+    #[test]
+    fn janela_fora_do_estudo_no_horario_de_trabalho_nao_avisa() {
+        let mut e = estado();
+        let t0 = nove();
+        e.config.as_mut().unwrap().expediente = vec![[t0, t0 + 9 * 60 * MIN]];
+        play(&mut e, t0);
+        let avisos = rodar(&mut e, t0, t0 + 5 * MIN, &mut leitor("Gatinho - YouTube", 0));
+        assert!(avisos.iter().all(|(t, _)| t != "Fora do estudo"));
+    }
+
+    #[test]
+    fn a_mesma_janela_fora_do_horario_de_trabalho_avisa() {
+        let mut e = estado();
+        let t0 = nove();
+        // O expediente acaba 2 minutos depois do play.
+        e.config.as_mut().unwrap().expediente = vec![[t0 - 60 * MIN, t0 + 2 * MIN]];
+        play(&mut e, t0);
+        let avisos = rodar(&mut e, t0, t0 + 2 * MIN, &mut leitor("Gatinho - YouTube", 0));
+        assert!(avisos.iter().all(|(t, _)| t != "Fora do estudo"));
+        let avisos = rodar(&mut e, t0 + 2 * MIN, t0 + 4 * MIN, &mut leitor("Gatinho - YouTube", 0));
+        assert_eq!(avisos.iter().filter(|(t, _)| t == "Fora do estudo").count(), 1);
+    }
+
+    #[test]
+    fn regra_de_trabalho_e_termo_de_objetivo_de_trabalho_nao_avisam() {
+        let video = janela("empresa-api: demo - YouTube", "chrome");
+        assert_eq!(distracao(&config(), &video).as_deref(), Some("YouTube"));
+        let mut config = config();
+        config.regras.push(regra("Slack", "slack", "app", "trabalho"));
+        config.termos.push("empresa-api".into());
+        assert!(distracao(&config, &janela("geral | Slack", "slack")).is_none());
+        assert!(distracao(&config, &video).is_none());
+    }
+
+    #[test]
+    fn configuracao_sem_expediente_ainda_e_lida() {
+        let antiga = r#"{"limiteAusenciaSeg":300,"ausenciaLongaSeg":900,"avisoDistracaoSeg":60,"cicloSeg":null,
+            "regras":[],"termos":["blender"],"inicioDoDiaMin":240}"#;
+        let config: Configuracao = serde_json::from_str(antiga).unwrap();
+        assert!(config.expediente.is_empty());
+        assert_eq!(config.termos, vec!["blender".to_string()]);
+        let nova = antiga.replace(r#""inicioDoDiaMin":240"#, r#""inicioDoDiaMin":240,"expediente":[[10,20]]"#);
+        let config: Configuracao = serde_json::from_str(&nova).unwrap();
+        assert_eq!(config.expediente, vec![[10, 20]]);
     }
 
     #[test]
