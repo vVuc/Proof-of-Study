@@ -51,6 +51,8 @@ pub enum ErroIA {
     Indisponivel,
     Resposta,
     Cofre { detalhe: String },
+    /// O microfone não abriu (ausente ou negado) na voz ao vivo (VOZ-07).
+    Microfone,
 }
 
 /// O corpo do `POST /v1beta/interactions`: saída em JSON pelo esquema e `store: false`, para não deixar estado no
@@ -246,6 +248,7 @@ fn nome_do_erro(erro: &ErroIA) -> &'static str {
         ErroIA::Indisponivel => "Indisponivel",
         ErroIA::Resposta => "Resposta",
         ErroIA::Cofre { .. } => "Cofre",
+        ErroIA::Microfone => "Microfone",
     }
 }
 
@@ -326,6 +329,13 @@ fn travar(ia: &IA) -> Result<std::sync::MutexGuard<'_, Interno>, ErroIA> {
     ia.0.lock().map_err(|_| ErroIA::Indisponivel)
 }
 
+/// A chave de uma chamada ao Gemini (análise ou voz): só com a IA ligada e com a chave salva.
+pub fn chave_da_chamada(app: &AppHandle, ia: &IA) -> Result<String, ErroIA> {
+    let mut e = travar(ia)?;
+    let guardada = chave_guardada(app, &mut e);
+    pode_chamar(e.ligada, guardada.as_ref().map(|(c, _)| c.as_str()))
+}
+
 /// O front avisa se a IA está ligada, ao abrir e a cada mudança.
 #[tauri::command]
 pub fn ia_configurar(ia: State<IA>, ligada: bool) {
@@ -381,11 +391,7 @@ pub fn ia_chave_remover(app: AppHandle, ia: State<IA>) -> Result<(), ErroIA> {
 /// Uma análise: o pedido do front vai ao Gemini com o modelo e a chave, e volta o texto JSON da resposta.
 #[tauri::command]
 pub async fn ia_gerar(app: AppHandle, ia: State<'_, IA>, pedido: PedidoIA) -> Result<RespostaIA, ErroIA> {
-    let chave = {
-        let mut e = travar(&ia)?;
-        let guardada = chave_guardada(&app, &mut e);
-        pode_chamar(e.ligada, guardada.as_ref().map(|(c, _)| c.as_str()))?
-    };
+    let chave = chave_da_chamada(&app, &ia)?;
     let tipo = pedido.tipo.clone();
     let inicio = Instant::now();
     let resultado = tauri::async_runtime::spawn_blocking(move || gerar(&chave, &pedido)).await.unwrap_or(Err(ErroIA::Resposta));

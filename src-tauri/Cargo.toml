@@ -28,11 +28,8 @@ tauri-plugin-notification = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-global-shortcut = "2"
-# Voz transcrita no PC (recurso opcional de compilação: sem ele, o relato é só texto). Precisa de CMake e do
-# libclang (LLVM) para gerar as bindings do whisper.cpp; o CI e a release compilam com ela.
-whisper-rs = { version = "0.16", optional = true }
-cpal = { version = "0.18", optional = true }
-sha2 = { version = "0.11", optional = true }
+# Microfone da voz ao vivo (no Linux, precisa do libasound2-dev para compilar).
+cpal = "0.18"
 # Cliente HTTP (rustls) das chamadas ao Gemini.
 ureq = "3"
 # Cofre do sistema para a chave do Gemini: Gerenciador de Credenciais no Windows, Secret Service no Linux.
@@ -40,11 +37,8 @@ keyring = "4"
 # Transcrição ao vivo do Gemini: WebSocket (rustls) no runtime do Tauri e o áudio em base64.
 tokio-tungstenite = { version = "0.30", features = ["rustls-tls-webpki-roots"] }
 tokio = { version = "1", features = ["sync", "time", "macros"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 base64 = "0.22"
-
-[features]
-default = []
-voz = ["dep:whisper-rs", "dep:cpal", "dep:sha2"]
 
 [target.'cfg(windows)'.dependencies]
 # Título da janela ativa, nome do programa e tempo sem mexer no teclado e mouse.

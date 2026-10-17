@@ -305,15 +305,15 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | IAERR-04 | P1: Falhas da IA | T14, T17 | Implementing |
 | IAERR-05 | P1: Falhas da IA | T17, T26 | Implementing |
 | IAERR-06 | P1: Falhas da IA | T16 | Implementing |
-| VOZ-01 | P2: Voz ao vivo | T31, T35 | In Tasks |
-| VOZ-02 | P2: Voz ao vivo | T31, T34 | In Tasks |
-| VOZ-03 | P2: Voz ao vivo | T31 | In Tasks |
+| VOZ-01 | P2: Voz ao vivo | T31, T35 | Implementing |
+| VOZ-02 | P2: Voz ao vivo | T31, T34 | Implementing |
+| VOZ-03 | P2: Voz ao vivo | T31 | Implementing |
 | VOZ-04 | P2: Voz ao vivo | T30 | Implementing |
-| VOZ-05 | P2: Voz ao vivo | T31, T34 | In Tasks |
+| VOZ-05 | P2: Voz ao vivo | T31, T34 | Implementing |
 | VOZ-06 | P2: Voz ao vivo | T35 | In Tasks |
-| VOZ-07 | P2: Voz ao vivo | T31, T35 | In Tasks |
-| VOZ-08 | P2: Voz ao vivo | T31 | In Tasks |
-| VOZ-09 | P2: Voz ao vivo | T31, T32, T35, T36 | In Tasks |
+| VOZ-07 | P2: Voz ao vivo | T31, T35 | Implementing |
+| VOZ-08 | P2: Voz ao vivo | T31 | Implementing |
+| VOZ-09 | P2: Voz ao vivo | T31, T32, T35, T36 | Implementing |
 | VOZ-10 | P2: Voz ao vivo | T33 | In Tasks |
 | PLANO-01 | P2: Plano pela IA | T27, T29 | Implementing |
 | PLANO-02 | P2: Plano pela IA | T28 | Implementing |

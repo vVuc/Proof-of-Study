@@ -1017,6 +1017,8 @@ T37 → T38 → T39
 
 #### T31: Sessão de voz ao vivo no lugar do Whisper
 
+**Status**: ✅ Concluída
+
 **What**: `voz_iniciar`, `voz_parar`, `voz_cancelar` e `voz_estado` com cpal → `mpsc` → tarefa com `select!` (envio de 100 ms e leitura do socket), header `x-goog-api-key`, eventos `voz:parcial` e `voz:erro`, fim aos 10 minutos e nada em disco; saem o Whisper, o download, o `sha2`, o `whisper-rs` e a feature `voz` do `Cargo.toml`, e os comandos novos entram no `lib.rs`.
 **Where**: `src-tauri/src/voz.rs`
 **Depends on**: T30
@@ -1030,10 +1032,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] O acúmulo de texto (finais + parcial) e o corte de 10 minutos estão em funções testadas (testes Rust)
-- [ ] Queda do socket mantém o texto acumulado e emite `voz:erro` (teste com uma sequência de mensagens falsa)
-- [ ] O build sem `--features` compila a voz e não tem `whisper`
-- [ ] Gate passa: build
+- [x] O acúmulo de texto (finais + parcial) e o corte de 10 minutos estão em funções testadas (testes Rust)
+- [x] Queda do socket mantém o texto acumulado e emite `voz:erro` (teste com uma sequência de mensagens falsa)
+- [x] O build sem `--features` compila a voz e não tem `whisper`
+- [x] Gate passa: build
 
 **Tests**: unit
 **Gate**: build
