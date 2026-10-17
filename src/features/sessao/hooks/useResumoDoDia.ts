@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { DataISO } from '@/shared/lib/datas'
+import { useAgora } from '@/shared/hooks/useAgora'
 import { useDados } from '@/store/context/dados-context'
 import type { Ajuste } from '@/store/model/dados'
 import { ajustesDoDia, contextoDoDia, sessoesDoDia } from '@/features/hoje/utils/dia'
@@ -30,7 +31,9 @@ export function useResumoDoDia(dia?: DataISO, ajustesForcados?: Record<string, A
   const janela = retrato?.atual
   const lida = capturando && janela && (janela.titulo || janela.processo) ? janela : null
   const ausente = (retrato?.msSemUso ?? 0) >= dados.preferencias.limiteAusenciaMin * 60_000
-  const classe = lida ? classificar({ ...lida, ausente, semCaptura: false }, contexto) : null
+  // O horário da janela ativa diz se ela está no expediente de trabalho (EXPED-01), como no resumo do dia.
+  const agora = useAgora()
+  const classe = lida ? classificar({ ...lida, ausente, semCaptura: false, inicio: agora.getTime() }, contexto) : null
   const ajuste = classe && !classe.fixo ? ajustes[classe.chave] : undefined
   const tipoAtual = classe ? (ajuste ? tipoDoAjuste(ajuste) : classe.tipo) : null
   const materiaAtual = dados.materias.find((m) => m.id === (materiaDoAjuste(ajuste) ?? classe?.materiaId))
