@@ -114,3 +114,47 @@ export function montarPedidoDoDia(
     mapa: { grupos: linha.chaves, materias: materias.mapa },
   }
 }
+
+const SISTEMA_DO_PLANO = `Você monta os objetivos do dia de uma pessoa a partir do plano que ela escreveu ou falou. A entrada é um JSON com o contexto que ela escreveu ("sobreVoce"), o texto do plano ("plano"), as matérias (ids m1, m2…, com o nome e os termos) e os objetivos que o dia já tem.
+
+Em "objetivos", liste o que o plano pede:
+- "estudo": com "materia" igual ao id da matéria de que o plano fala, mesmo sem citar o nome exato, e "titulo" null; sem matéria que sirva, com "materia" null e um "titulo" curto;
+- "trabalho": com um "titulo" curto e "materia" null.
+Em "termos", ponha as palavras que devem aparecer no título das janelas desse objetivo hoje (o repositório, o arquivo, o site), sem repetir os termos da matéria. Lazer e descanso citados não viram objetivo. Não repita os objetivos que o dia já tem. Escreva os títulos em português do Brasil.`
+
+const ESQUEMA_DO_PLANO = {
+  type: 'object',
+  properties: {
+    objetivos: {
+      type: 'array',
+      maxItems: 20,
+      items: {
+        type: 'object',
+        properties: {
+          tipo: { type: 'string', enum: ['estudo', 'trabalho'] },
+          materia: { type: ['string', 'null'] },
+          titulo: { type: ['string', 'null'] },
+          termos: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['tipo', 'materia', 'titulo', 'termos'],
+      },
+    },
+  },
+  required: ['objetivos'],
+}
+
+/** O pedido do plano do dia (PLANO-01): o texto do plano, o "Sobre você", as matérias com os termos e os objetivos que o dia já tem. */
+export function montarPedidoDoPlano(dados: Dados, dia: DataISO, texto: string): { pedido: PedidoIA; mapa: MapaIds } {
+  const materias = materiasComIds(dados)
+  const entrada = {
+    dia,
+    sobreVoce: dados.preferencias.sobreVoce,
+    plano: texto,
+    materias: materias.lista,
+    objetivosDoDia: objetivosDoDia(dados, dia).map((o) => ({ tipo: o.tipo ?? 'estudo', materia: materias.curto(o.materiaId), titulo: o.titulo ?? null })),
+  }
+  return {
+    pedido: { tipo: 'plano', sistema: SISTEMA_DO_PLANO, entrada: JSON.stringify(entrada), esquema: ESQUEMA_DO_PLANO },
+    mapa: { grupos: {}, materias: materias.mapa },
+  }
+}

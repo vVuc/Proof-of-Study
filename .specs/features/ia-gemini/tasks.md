@@ -896,6 +896,8 @@ T37 → T38 → T39
 
 #### T27: Pedido do plano
 
+**Status**: ✅ Concluída
+
 **What**: `montarPedidoDoPlano(dados, dia, texto)` com o "Sobre você", as matérias (`m1…`, nome e termos), os objetivos do dia e o esquema `{ objetivos: { tipo, materia, titulo, termos }[] }`.
 **Where**: `src/features/ia/utils/prompts.ts`
 **Depends on**: T22
@@ -909,10 +911,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] A entrada traz o texto do plano, o "Sobre você" e as matérias com os termos (teste)
-- [ ] O esquema limita `tipo` a `estudo` e `trabalho` (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 2
+- [x] A entrada traz o texto do plano, o "Sobre você" e as matérias com os termos (teste)
+- [x] O esquema limita `tipo` a `estudo` e `trabalho` (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 2
 
 **Tests**: unit
 **Gate**: quick

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { dadosIniciais, type BlocoRotina, type Dados, type Materia, type Meta, type Objetivo, type Regra, type Relato, type Sessao, type Trecho } from '@/store/model/dados'
-import { montarPedidoDoDia, REGRAS_DE_TOM } from './prompts'
+import { montarPedidoDoDia, montarPedidoDoPlano, REGRAS_DE_TOM } from './prompts'
 
 const MIN = 60_000
 // 19/10/2026 é uma segunda.
@@ -138,5 +138,35 @@ describe('montarPedidoDoDia', () => {
     const sugestao = (esquema as { properties: { sugestoes: { items: { properties: Record<string, unknown>; required: string[] } } } }).properties.sugestoes.items
     expect(sugestao.properties.tipo).toEqual({ type: 'string', enum: ['estudo', 'trabalho', 'fora', 'ignorar'] })
     expect(sugestao.required).toEqual(['grupo', 'tipo', 'materia', 'motivo'])
+  })
+})
+
+describe('montarPedidoDoPlano (PLANO-01)', () => {
+  const plano = 'Hoje quero ler o rust-book e corrigir o bug da empresa-api'
+
+  it('a entrada traz o texto do plano, o "Sobre você" (IACONF-11), as matérias com os termos e os objetivos do dia', () => {
+    const { pedido, mapa } = montarPedidoDoPlano(dados(), SEGUNDA, plano)
+    expect(pedido.tipo).toBe('plano')
+    const e = JSON.parse(pedido.entrada)
+    expect(e.plano).toBe(plano)
+    expect(e.sobreVoce).toBe('Sou dev na empresa X; o repositório empresa-api é trabalho.')
+    expect(e.materias).toEqual([
+      { id: 'm1', nome: 'Rust', termos: ['rust-book'] },
+      { id: 'm2', nome: 'Inglês', termos: [] },
+    ])
+    expect(e.objetivosDoDia).toEqual([
+      { tipo: 'estudo', materia: 'm1', titulo: null },
+      { tipo: 'trabalho', materia: null, titulo: 'Corrigir o bug' },
+    ])
+    expect(mapa.materias).toEqual({ m1: rust.id, m2: ingles.id })
+    expect(pedido.entrada).not.toContain(rust.id)
+  })
+
+  it('o esquema limita o tipo a estudo e trabalho', () => {
+    const { esquema } = montarPedidoDoPlano(dados(), SEGUNDA, plano).pedido
+    expect(esquema).toMatchObject({ type: 'object', required: ['objetivos'] })
+    const objetivo = (esquema as { properties: { objetivos: { items: { properties: Record<string, unknown>; required: string[] } } } }).properties.objetivos.items
+    expect(objetivo.properties.tipo).toEqual({ type: 'string', enum: ['estudo', 'trabalho'] })
+    expect(objetivo.required).toEqual(['tipo', 'materia', 'titulo', 'termos'])
   })
 })
