@@ -742,6 +742,8 @@ T37 → T38 → T39
 
 #### T22: Pedido do insight do dia
 
+**Status**: ✅ Concluída
+
 **What**: `montarPedidoDoDia` com `REGRAS_DE_TOM`, o "Sobre você", as matérias (`m1…`), as metas da semana, os objetivos, o relato inicial, os itens da Rotina com horário do dia, os grupos e as pausas, mais o esquema da resposta.
 **Where**: `src/features/ia/utils/prompts.ts`
 **Depends on**: T21
@@ -755,12 +757,12 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] A instrução pede pt-BR e proíbe "perdido", "fracasso" e "falha" (teste)
-- [ ] A entrada traz o "Sobre você", o relato inicial, os itens da Rotina do dia e os objetivos com o tipo (testes)
-- [ ] Nenhum UUID de matéria ou objetivo aparece na entrada (teste)
-- [ ] O esquema tem `texto` e `sugestoes` com o enum de tipos (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 5
+- [x] A instrução pede pt-BR e proíbe "perdido", "fracasso" e "falha" (teste)
+- [x] A entrada traz o "Sobre você", o relato inicial, os itens da Rotina do dia e os objetivos com o tipo (testes)
+- [x] Nenhum UUID de matéria ou objetivo aparece na entrada (teste)
+- [x] O esquema tem `texto` e `sugestoes` com o enum de tipos (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 5
 
 **Tests**: unit
 **Gate**: quick

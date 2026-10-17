@@ -294,7 +294,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | INSD-06 | P1: Insight do dia | T25 | In Tasks |
 | INSD-07 | P1: Insight do dia | T25 | In Tasks |
 | INSD-08 | P1: Insight do dia | T26 | In Tasks |
-| INSD-09 | P1: Insight do dia | T22 | In Tasks |
+| INSD-09 | P1: Insight do dia | T22 | Implementing |
 | INSD-10 | P1: Insight do dia | T24, T26 | In Tasks |
 | INSD-11 | P1: Insight do dia | T24, T26 | In Tasks |
 | INSD-12 | P1: Insight do dia | T21 | Implementing |
