@@ -303,7 +303,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | IAERR-02 | P1: Falhas da IA | T14, T17 | Implementing |
 | IAERR-03 | P1: Falhas da IA | T14, T17 | Implementing |
 | IAERR-04 | P1: Falhas da IA | T14, T17 | Implementing |
-| IAERR-05 | P1: Falhas da IA | T17, T26 | In Tasks |
+| IAERR-05 | P1: Falhas da IA | T17, T26 | Implementing |
 | IAERR-06 | P1: Falhas da IA | T16 | Implementing |
 | VOZ-01 | P2: Voz ao vivo | T31, T35 | In Tasks |
 | VOZ-02 | P2: Voz ao vivo | T31, T34 | In Tasks |

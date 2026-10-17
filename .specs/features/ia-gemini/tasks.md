@@ -595,6 +595,8 @@ T37 → T38 → T39
 
 #### T17: API e mensagens da IA no front
 
+**Status**: ✅ Concluída
+
 **What**: `api/ia.ts` (wrappers de `invoke` e os tipos de `ErroIA`) e `constants/mensagens.ts` com `mensagemDoErro` e os textos exatos da spec.
 **Where**: `src/features/ia/constants/mensagens.ts`
 **Depends on**: T16
@@ -608,10 +610,10 @@ T37 → T38 → T39
 
 **Done when**:
 
-- [ ] Cada `ErroIA` dá o texto exato da spec, no teste e na análise (testes em `mensagens.test.ts`)
-- [ ] Erro desconhecido cai em "A resposta do Gemini veio incompleta. Tente de novo." (teste)
-- [ ] Gate passa: quick
-- [ ] Contagem do front ≥ anterior + 9
+- [x] Cada `ErroIA` dá o texto exato da spec, no teste e na análise (testes em `mensagens.test.ts`)
+- [x] Erro desconhecido cai em "A resposta do Gemini veio incompleta. Tente de novo." (teste)
+- [x] Gate passa: quick
+- [x] Contagem do front ≥ anterior + 9
 
 **Tests**: unit
 **Gate**: quick
