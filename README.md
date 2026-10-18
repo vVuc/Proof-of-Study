@@ -52,6 +52,8 @@ Fora das telas: o aviso "Hora do estudo" quando começa um item de estudo com ho
 
 ## Como funciona
 
+Para seguir o fluxo principal no código, passo a passo, veja o [tutorial do fluxo principal](docs/tutorial/fluxo-principal.md).
+
 - **Um play por dia** (`src-tauri/src/rastreador.rs`). O play abre a sessão do dia, e o Rust lê a janela ativa uma vez por segundo até a pessoa pausar, salvar o relato final ou o dia virar (às 4h, configurável). Fechar a janela só esconde o app na bandeja.
 - **Pausas automáticas.** Ausência longa (15 min sem teclado e mouse, configurável) e computador suspenso viram pausas, e a captura volta sozinha quando a pessoa volta.
 - **Diário e recuperação.** O Rust grava a sessão ativa em `sessao-ativa.json` a cada 15 s e a cada play ou pausa (escrita atômica). Se o app fechar ou o PC desligar, ao abrir no mesmo dia a sessão volta como estava, com o tempo desligado como pausa. Uma sessão fechada só sai do diário depois que o front confirma que a gravou no `dados.json`.
